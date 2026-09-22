@@ -1,34 +1,5 @@
 from app.retrieval_service import search_documents
-from app.embedding_service import generate_embedding
-
-import os
-
-from azure.identity import InteractiveBrowserCredential, get_bearer_token_provider
-from openai import OpenAI
-
-
-FOUNDRY_ACCOUNT = "doctalk-korea-ai"
-
-CHAT_MODEL = "gpt-5-mini"
-
-_token_provider = None
-_openai_client = None
-
-def get_openai_client():
-    global _token_provider, _openai_client
-    if _openai_client is None:
-        _token_provider = get_bearer_token_provider(
-            InteractiveBrowserCredential(),
-            "https://cognitiveservices.azure.com/.default",
-        )
-        _openai_client = OpenAI(
-            base_url=f"https://{FOUNDRY_ACCOUNT}.services.ai.azure.com/openai/v1",
-            api_key="placeholder",
-            default_headers={
-                "Authorization": f"Bearer {_token_provider()}"
-            },
-        )
-    return _openai_client
+from app.chat_service import generate_chat_completion
 
 from typing import Optional
 
@@ -49,8 +20,6 @@ def generate_rag_answer(
         raise ValueError("Question cannot be empty.")
 
     # Retrieve relevant chunks from Azure AI Search.
-    # When document_ids is provided, the search is filtered
-    # to only return chunks from those specific documents.
     retrieved_chunks = search_documents(
         question,
         top_k=top_k,
@@ -105,17 +74,7 @@ User question:
 {question}
 """
 
-    response = get_openai_client().chat.completions.create(
-        model=CHAT_MODEL,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-    )
-
-    answer = response.choices[0].message.content
+    answer = generate_chat_completion(prompt)
 
     sources = [
         {

@@ -1,8 +1,8 @@
-from azure.identity import InteractiveBrowserCredential, get_bearer_token_provider
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import OpenAI
 
 
-FOUNDRY_ACCOUNT = "doctalk-korea-ai"
+FOUNDRY_ACCOUNT = "doctalk-korea"
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIMENSIONS = 1536
@@ -16,7 +16,7 @@ def get_openai_client():
     global _token_provider, _openai_client
     if _openai_client is None:
         _token_provider = get_bearer_token_provider(
-            InteractiveBrowserCredential(),
+            DefaultAzureCredential(),
             "https://cognitiveservices.azure.com/.default",
         )
         _openai_client = OpenAI(

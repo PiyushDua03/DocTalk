@@ -1,31 +1,9 @@
 import os
 
-from azure.identity import InteractiveBrowserCredential
 from azure.search.documents import SearchClient
 
 from app.embedding_service import generate_embedding
-
-
-SEARCH_ENDPOINT = os.getenv(
-    "AZURE_SEARCH_ENDPOINT",
-    "https://doctalk-search.search.windows.net",
-)
-
-INDEX_NAME = os.getenv(
-    "AZURE_SEARCH_INDEX_NAME",
-    "doctalk-documents",
-)
-
-
-def get_search_client() -> SearchClient:
-    """Create an Azure AI Search client."""
-
-    return SearchClient(
-        endpoint=SEARCH_ENDPOINT,
-        index_name=INDEX_NAME,
-        credential=InteractiveBrowserCredential(),
-    )
-
+from app.search_service import get_search_client
 
 def index_chunks(chunks: list[dict]) -> dict:
     """

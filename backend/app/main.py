@@ -1,9 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from azure.identity import InteractiveBrowserCredential
-from azure.ai.projects import AIProjectClient
-
 from pypdf import PdfReader
 from docx import Document
 from pydantic import BaseModel
@@ -54,6 +51,9 @@ app.add_middleware(
 # Azure AI Foundry project connection
 # ---------------------------------------------------------
 
+from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
+
 endpoint = "https://doctalk-korea.services.ai.azure.com/api/projects/DocTalk"
 
 _openai_client = None
@@ -61,7 +61,7 @@ _openai_client = None
 def get_openai_client():
     global _openai_client
     if _openai_client is None:
-        credential = InteractiveBrowserCredential()
+        credential = DefaultAzureCredential()
         project_client = AIProjectClient(
             endpoint=endpoint,
             credential=credential,
@@ -94,6 +94,8 @@ current_document = {
 class SearchRequest(BaseModel):
     query: str
     top_k: int = 5
+    mode: str = "hybrid"  # "keyword", "vector", "hybrid"
+    document_ids: list[str] = []
 
 
 class RagChatRequest(BaseModel):
@@ -134,17 +136,35 @@ def root():
 # Search endpoint
 # ---------------------------------------------------------
 
+from app.search_service import keyword_search, vector_search, hybrid_search
+from app.embedding_service import generate_embedding
+
 @app.post("/search")
 def search(request: SearchRequest):
     try:
-        results = search_documents(
-            request.query,
-            top_k=request.top_k,
-        )
+        if request.mode == "keyword":
+            results = keyword_search(request.query, top=request.top_k, document_ids=request.document_ids)
+        elif request.mode == "vector":
+            query_vector = generate_embedding(request.query)
+            results = vector_search(query_vector, top=request.top_k, document_ids=request.document_ids)
+        else: # default to hybrid
+            query_vector = generate_embedding(request.query)
+            results = hybrid_search(request.query, query_vector, top=request.top_k, document_ids=request.document_ids)
 
         return {
             "query": request.query,
-            "results": results,
+            "mode": request.mode,
+            "results": [
+                {
+                    "chunk_id": result["chunk_id"],
+                    "document_id": result["document_id"],
+                    "document_name": result["document_name"],
+                    "page_number": result["page_number"],
+                    "content": result["content"],
+                    "score": result.get("@search.score", 0),
+                }
+                for result in results
+            ],
         }
 
     except Exception as error:

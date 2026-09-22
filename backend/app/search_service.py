@@ -1,6 +1,7 @@
 import os
 
-from azure.core.credentials import AzureKeyCredential
+from azure.identity import DefaultAzureCredential
+from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
     SearchField,
@@ -12,14 +13,12 @@ from azure.search.documents.indexes.models import (
     VectorSearchProfile,
     HnswAlgorithmConfiguration,
 )
-
+from azure.search.documents.models import VectorizedQuery
 
 SEARCH_ENDPOINT = os.getenv(
     "AZURE_SEARCH_ENDPOINT",
-    "https://doctalk-search.search.windows.net",
+    "https://doctalk-search-rag.search.windows.net",
 )
-
-SEARCH_API_KEY = os.getenv("AZURE_SEARCH_API_KEY")
 
 INDEX_NAME = os.getenv(
     "AZURE_SEARCH_INDEX_NAME",
@@ -28,20 +27,21 @@ INDEX_NAME = os.getenv(
 
 EMBEDDING_DIMENSIONS = 1536
 
+def get_credential():
+    return DefaultAzureCredential()
 
 def get_index_client() -> SearchIndexClient:
-    if not SEARCH_API_KEY:
-        raise RuntimeError(
-            "AZURE_SEARCH_API_KEY environment variable is not set."
-        )
-
-    credential = AzureKeyCredential(SEARCH_API_KEY)
-
     return SearchIndexClient(
         endpoint=SEARCH_ENDPOINT,
-        credential=credential,
+        credential=get_credential(),
     )
 
+def get_search_client() -> SearchClient:
+    return SearchClient(
+        endpoint=SEARCH_ENDPOINT,
+        index_name=INDEX_NAME,
+        credential=get_credential(),
+    )
 
 def create_search_index() -> SearchIndex:
     index_client = get_index_client()
@@ -53,36 +53,29 @@ def create_search_index() -> SearchIndex:
             key=True,
             filterable=True,
         ),
-
         SimpleField(
             name="document_id",
             type=SearchFieldDataType.String,
             filterable=True,
         ),
-
         SearchableField(
             name="document_name",
             type=SearchFieldDataType.String,
             filterable=True,
         ),
-
         SimpleField(
             name="page_number",
             type=SearchFieldDataType.Int32,
             filterable=True,
             sortable=True,
         ),
-
         SearchableField(
             name="content",
             type=SearchFieldDataType.String,
         ),
-
         SearchField(
             name="content_vector",
-            type=SearchFieldDataType.Collection(
-                SearchFieldDataType.Single
-            ),
+            type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
             searchable=True,
             vector_search_dimensions=EMBEDDING_DIMENSIONS,
             vector_search_profile_name="doc-vector-profile",
@@ -90,17 +83,8 @@ def create_search_index() -> SearchIndex:
     ]
 
     vector_search = VectorSearch(
-        algorithms=[
-            HnswAlgorithmConfiguration(
-                name="doc-hnsw"
-            )
-        ],
-        profiles=[
-            VectorSearchProfile(
-                name="doc-vector-profile",
-                algorithm_configuration_name="doc-hnsw",
-            )
-        ],
+        algorithms=[HnswAlgorithmConfiguration(name="doc-hnsw")],
+        profiles=[VectorSearchProfile(name="doc-vector-profile", algorithm_configuration_name="doc-hnsw")],
     )
 
     index = SearchIndex(
@@ -110,3 +94,53 @@ def create_search_index() -> SearchIndex:
     )
 
     return index_client.create_or_update_index(index)
+
+def keyword_search(query: str, top: int = 5, document_ids: list[str] = None):
+    client = get_search_client()
+    filter_expr = f"search.in(document_id, '{','.join(document_ids)}')" if document_ids else None
+    
+    results = client.search(
+        search_text=query,
+        select=["chunk_id", "document_id", "document_name", "page_number", "content"],
+        filter=filter_expr,
+        top=top
+    )
+    return list(results)
+
+def vector_search(query_vector: list[float], top: int = 5, document_ids: list[str] = None):
+    client = get_search_client()
+    filter_expr = f"search.in(document_id, '{','.join(document_ids)}')" if document_ids else None
+    
+    vector_query = VectorizedQuery(
+        vector=query_vector,
+        k_nearest_neighbors=top,
+        fields="content_vector"
+    )
+    
+    results = client.search(
+        search_text=None,
+        vector_queries=[vector_query],
+        select=["chunk_id", "document_id", "document_name", "page_number", "content"],
+        filter=filter_expr,
+        top=top
+    )
+    return list(results)
+
+def hybrid_search(query: str, query_vector: list[float], top: int = 5, document_ids: list[str] = None):
+    client = get_search_client()
+    filter_expr = f"search.in(document_id, '{','.join(document_ids)}')" if document_ids else None
+    
+    vector_query = VectorizedQuery(
+        vector=query_vector,
+        k_nearest_neighbors=top,
+        fields="content_vector"
+    )
+    
+    results = client.search(
+        search_text=query,
+        vector_queries=[vector_query],
+        select=["chunk_id", "document_id", "document_name", "page_number", "content"],
+        filter=filter_expr,
+        top=top
+    )
+    return list(results)
