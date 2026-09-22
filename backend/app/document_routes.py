@@ -155,6 +155,30 @@ async def upload_documents(files: list[UploadFile] = File(...)):
             )
             metadata_store.save_document(doc)
 
+            # -----------------------------------------------
+            # Auto-index into Azure AI Search for RAG
+            # -----------------------------------------------
+            try:
+                from app.chunking_service import chunk_text
+                from app.indexing_service import index_chunks
+
+                chunks = chunk_text(
+                    text=text,
+                    document_id=document_id,
+                    document_name=filename,
+                    pages=pages,
+                )
+                index_result = index_chunks(chunks)
+                logger.info(
+                    f"Auto-indexed {filename}: "
+                    f"{index_result.get('uploaded', 0)} chunks uploaded"
+                )
+            except Exception as index_err:
+                logger.warning(
+                    f"Auto-indexing failed for {filename}: {index_err}. "
+                    f"Document uploaded but not searchable via RAG."
+                )
+
             results.append(UploadResult(
                 document_id=document_id,
                 filename=filename,

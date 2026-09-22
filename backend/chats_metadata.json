@@ -1,0 +1,138 @@
+{
+  "caca88c9-8156-41bb-8e2a-7c7221c1124f": {
+    "conversation_id": "caca88c9-8156-41bb-8e2a-7c7221c1124f",
+    "title": "What is the revenue?",
+    "created_at": "2026-09-22T21:29:17.722347",
+    "updated_at": "2026-09-22T21:29:17.722347",
+    "document_ids": [
+      "8a62876a-0560-444b-abbe-d7548ca7d03a"
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the revenue?",
+        "timestamp": "2026-09-22T21:29:17.722347"
+      },
+      {
+        "role": "assistant",
+        "content": "The total revenue for the year 2023 was $1.5 million.",
+        "timestamp": "2026-09-22T21:29:24.067380"
+      }
+    ]
+  },
+  "829ea879-dc61-4272-a1e5-b884756d1274": {
+    "conversation_id": "829ea879-dc61-4272-a1e5-b884756d1274",
+    "title": "Compare the revenue and focus between th...",
+    "created_at": "2026-09-22T21:29:24.070268",
+    "updated_at": "2026-09-22T21:29:24.070268",
+    "document_ids": [
+      "8a62876a-0560-444b-abbe-d7548ca7d03a",
+      "c6b946c1-5332-423c-8d8e-3b00b219f57d"
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Compare the revenue and focus between the two documents.",
+        "timestamp": "2026-09-22T21:29:24.070268"
+      },
+      {
+        "role": "assistant",
+        "content": "- Document A: total revenue for 2023 was $1.5 million; main focus is AI adoption.\n- Document B: total revenue for 2023 was $800,000; main focus is cloud infrastructure.\n- Comparison: Document A reported $700,000 more revenue than Document B and focuses on AI adoption, whereas Document B focuses on cloud infrastructure.",
+        "timestamp": "2026-09-22T21:29:31.322396"
+      }
+    ]
+  },
+  "251c43cf-28bf-479e-b999-05b6b4d5c6c2": {
+    "conversation_id": "251c43cf-28bf-479e-b999-05b6b4d5c6c2",
+    "title": "What is the capital of France?",
+    "created_at": "2026-09-22T21:29:31.329013",
+    "updated_at": "2026-09-22T21:29:31.329013",
+    "document_ids": [
+      "8a62876a-0560-444b-abbe-d7548ca7d03a",
+      "c6b946c1-5332-423c-8d8e-3b00b219f57d"
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the capital of France?",
+        "timestamp": "2026-09-22T21:29:31.329013"
+      },
+      {
+        "role": "assistant",
+        "content": "I could not find that information in the uploaded documents.",
+        "timestamp": "2026-09-22T21:29:36.099217"
+      }
+    ]
+  },
+  "7177b520-7a76-41b4-84b5-caf55736ccdf": {
+    "conversation_id": "7177b520-7a76-41b4-84b5-caf55736ccdf",
+    "title": "Create useful study notes from the uploa...",
+    "created_at": "2026-09-22T21:30:44.611052",
+    "updated_at": "2026-09-22T21:30:44.611052",
+    "document_ids": [
+      "910568f5-bc36-437e-9f80-839928b7b0d2"
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Create useful study notes from the uploaded document.",
+        "timestamp": "2026-09-22T21:30:44.611052"
+      },
+      {
+        "role": "assistant",
+        "content": "I could not find that information in the uploaded documents.",
+        "timestamp": "2026-09-22T21:30:47.868808"
+      }
+    ]
+  },
+  "9f400eae-c06c-43c2-a1ad-150c31d45b0a": {
+    "conversation_id": "9f400eae-c06c-43c2-a1ad-150c31d45b0a",
+    "title": "Create useful study notes from the uploa...",
+    "created_at": "2026-09-22T21:31:04.902608",
+    "updated_at": "2026-09-22T21:31:04.902608",
+    "document_ids": [],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Create useful study notes from the uploaded document.",
+        "timestamp": "2026-09-22T21:31:04.902608"
+      },
+      {
+        "role": "assistant",
+        "content": "I can do that — but which uploaded document should I use?\n\nI see these files in this conversation: the NVIDIA × Accenture “NCCX — The NVIDIA Compute Capacity Exchange” final bid pitch (final_bid_pitch.docx).   \nAnd Anvi Puri’s resume (Anvi_Puri_Resume.docx). \n\nQuick questions so I make notes you’ll actually use:\n- Which file should I create study notes from? (final_bid_pitch.docx or Anvi_Puri_Resume.docx)\n- Which format do you want? (choose one or more)\n  - Concise bullet summary (1 page)\n  - Detailed outline with headings and key quotes\n  - Flashcards (Q/A) for revision\n  - Key terms + definitions / cheat sheet\n  - Practice Q&A or mock interview questions\n- Any specific sections or length you prefer? (e.g., executive summary only, full document, 5–10 flashcards)\n\nReply with your choices and I’ll generate the notes.",
+        "timestamp": "2026-09-22T21:31:20.174936"
+      }
+    ]
+  },
+  "42e23260-ad5d-48a8-8579-201fda7f8208": {
+    "conversation_id": "42e23260-ad5d-48a8-8579-201fda7f8208",
+    "title": "Give me a concise summary of the uploade...",
+    "created_at": "2026-09-22T21:31:26.656209",
+    "updated_at": "2026-09-22T21:32:48.322289",
+    "document_ids": [
+      "597ee255-daae-4d09-bf25-0ec3ac742d60"
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Give me a concise summary of the uploaded document.",
+        "timestamp": "2026-09-22T21:31:26.656209"
+      },
+      {
+        "role": "assistant",
+        "content": "I see two uploaded files: final_bid_pitch.docx (a final boardroom pitch for \"NCCX — The NVIDIA Compute Capacity Exchange\") and Anvi_Puri_Resume.docx. Do you mean the pitch (final_bid_pitch.docx) or the resume? Below is a concise summary of the pitch — tell me if you want the resume summarized instead or a longer summary.\n\nConcise summary (final_bid_pitch.docx):\n- Purpose: Proposes \"NCCX\" (NVIDIA Connected Command Exchange), a decision-and-operating layer to connect NVIDIA’s compute, demand, supply, finance, legal, cybersecurity and talent so compute is deployed faster, directed smarter and scaled safely. \n- Core components: an AI Control Tower for supply-chain visibility and resilience; an Enterprise AI Pod and Cluster Telemetry to speed time-to-power-on and maintain GPU productivity; a Capacity Ledger and Allocation Optimizer to allocate constrained capacity. fileciteturn0file3turn0file4\n- Operating model: One global decision system executed across four locally governed environments (U.S., China, France, India) with human approval on high‑impact actions and integrated governance. fileciteturn0file3turn0file6\n- Investment and value hypothesis: A proposed $200M transformation (breakdown: $20M Mobilize & Diagnose; $40M Design & Pilot; $80M Global Expansion; $60M Optimize & Transfer) with an illustrative three‑year value hypothesis of ~$1.3B (subject to early validation). fileciteturn0file6turn0file2\n- Risk controls & transfer: Emphasizes legal/compliance mapping, embedded cybersecurity, talent development/knowledge transfer, narrow pilots with value gates, and a five‑year plan to transfer mature capability to NVIDIA. fileciteturn0file1turn0file2\n\nWould you like a one-paragraph executive summary, a slide-style bullet list, or a summary of the other uploaded file (the resume)?",
+        "timestamp": "2026-09-22T21:31:41.376006"
+      },
+      {
+        "role": "user",
+        "content": "Give me a concise summary of the uploaded document.",
+        "timestamp": "2026-09-22T21:32:48.322289"
+      },
+      {
+        "role": "assistant",
+        "content": "I could not find that information in the uploaded documents.",
+        "timestamp": "2026-09-22T21:32:51.622543"
+      }
+    ]
+  }
+}
