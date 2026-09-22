@@ -162,17 +162,30 @@ async def upload_documents(files: list[UploadFile] = File(...)):
                 from app.chunking_service import chunk_text
                 from app.indexing_service import index_chunks
 
-                chunks = chunk_text(
-                    text=text,
-                    document_id=document_id,
-                    document_name=filename,
-                    pages=pages,
-                )
-                index_result = index_chunks(chunks)
-                logger.info(
-                    f"Auto-indexed {filename}: "
-                    f"{index_result.get('uploaded', 0)} chunks uploaded"
-                )
+                all_chunks = []
+                if pages:
+                    for page_info in pages:
+                        page_chunks = chunk_text(
+                            text=page_info.text,
+                            document_id=document_id,
+                            document_name=filename,
+                            page_number=page_info.page_number,
+                        )
+                        all_chunks.extend(page_chunks)
+                else:
+                    all_chunks = chunk_text(
+                        text=text,
+                        document_id=document_id,
+                        document_name=filename,
+                        page_number=1,
+                    )
+
+                if all_chunks:
+                    index_result = index_chunks(all_chunks)
+                    logger.info(
+                        f"Auto-indexed {filename}: "
+                        f"{index_result.get('uploaded', 0)} chunks uploaded"
+                    )
             except Exception as index_err:
                 logger.warning(
                     f"Auto-indexing failed for {filename}: {index_err}. "

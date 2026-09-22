@@ -420,17 +420,22 @@ async def upload_document(file: UploadFile = File(...)):
         # Auto-index into Azure AI Search for RAG
         # -------------------------------------------------
         try:
-            chunks = chunk_text(
-                text=text,
-                document_id=document_id,
-                document_name=filename,
-                pages=pages_info,
-            )
-            index_result = index_chunks(chunks)
-            logger.info(
-                f"Auto-indexed {filename}: "
-                f"{index_result.get('uploaded', 0)} chunks uploaded"
-            )
+            all_chunks = []
+            for i, page_text in enumerate(document_pages):
+                page_chunks = chunk_text(
+                    text=page_text,
+                    document_id=document_id,
+                    document_name=filename,
+                    page_number=i + 1,
+                )
+                all_chunks.extend(page_chunks)
+
+            if all_chunks:
+                index_result = index_chunks(all_chunks)
+                logger.info(
+                    f"Auto-indexed {filename}: "
+                    f"{index_result.get('uploaded', 0)} chunks uploaded"
+                )
         except Exception as index_err:
             logger.warning(
                 f"Auto-indexing failed for {filename}: {index_err}. "

@@ -108,7 +108,7 @@
     "conversation_id": "42e23260-ad5d-48a8-8579-201fda7f8208",
     "title": "Give me a concise summary of the uploade...",
     "created_at": "2026-09-22T21:31:26.656209",
-    "updated_at": "2026-09-22T21:32:48.322289",
+    "updated_at": "2026-09-22T21:35:26.352019",
     "document_ids": [
       "597ee255-daae-4d09-bf25-0ec3ac742d60"
     ],
@@ -132,6 +132,37 @@
         "role": "assistant",
         "content": "I could not find that information in the uploaded documents.",
         "timestamp": "2026-09-22T21:32:51.622543"
+      },
+      {
+        "role": "user",
+        "content": "Give me a concise summary of the uploaded document.",
+        "timestamp": "2026-09-22T21:35:26.352019"
+      },
+      {
+        "role": "assistant",
+        "content": "I could not find that information in the uploaded documents.",
+        "timestamp": "2026-09-22T21:35:30.803508"
+      }
+    ]
+  },
+  "707c2000-4929-43d6-b092-b4a79d05648f": {
+    "conversation_id": "707c2000-4929-43d6-b092-b4a79d05648f",
+    "title": "Give me a concise summary of the uploade...",
+    "created_at": "2026-09-22T21:35:52.454473",
+    "updated_at": "2026-09-22T21:35:52.454473",
+    "document_ids": [
+      "0694b368-c020-4695-9fe3-f0143c31e4e0"
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Give me a concise summary of the uploaded document.",
+        "timestamp": "2026-09-22T21:35:52.454473"
+      },
+      {
+        "role": "assistant",
+        "content": "I could not find that information in the uploaded documents.",
+        "timestamp": "2026-09-22T21:35:55.626309"
       }
     ]
   }
