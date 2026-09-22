@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DocTalk — AI Document Intelligence</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+
+            <div class="brand">
+                <div class="brand-icon">✦</div>
+
+                <div>
+                    <h2>DocTalk</h2>
+                    <p>AI Document Intelligence</p>
+                </div>
+            </div>
+
+            <button class="new-chat-btn" id="newChatBtn" type="button">
+                <span>＋</span>
+                New conversation
+            </button>
+
+            <div class="sidebar-section" id="recentChatsSection">
+                <p class="section-label">RECENT CHATS</p>
+                <ul id="conversationList" class="conversation-list">
+                    <!-- Conversations will be loaded here -->
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+
+                <p class="section-label">WORKSPACE</p>
+
+                <!-- AI Assistant -->
+                <div class="sidebar-item active" data-target="chatArea" role="button" tabindex="0">
+                    <span>▣</span>
+                    <span>AI Assistant</span>
+                </div>
+
+                <!-- Document Insights -->
+                <div class="sidebar-item" data-target="insightsPanel" role="button" tabindex="0">
+                    <span>◈</span>
+                    <span>Document Insights</span>
+                </div>
+
+                <!-- Compare Documents -->
+                <div class="sidebar-item" data-target="comparisonPanel" role="button" tabindex="0">
+                    <span>⇄</span>
+                    <span>Compare Documents</span>
+                </div>
+
+                <!-- My Documents -->
+                <div class="sidebar-item">
+                    <span>▤</span>
+                    <span>My Documents</span>
+                    <span class="coming-soon">Soon</span>
+                </div>
+
+            </div>
+
+            <div class="sidebar-bottom">
+
+                <div class="connection-status">
+                    <span class="status-dot"></span>
+
+                    <div>
+                        <strong>Azure AI Connected</strong>
+                        <small>DocTalk-Agent</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Top Bar -->
+            <header class="topbar">
+
+                <div class="mobile-brand">
+                    <span class="brand-icon">✦</span>
+                    <strong>DocTalk</strong>
+                </div>
+
+                <div class="topbar-right">
+                    <span class="online-dot"></span>
+                    <span>Agent online</span>
+                </div>
+
+            </header>
+
+
+            <!-- Chat Area -->
+            <section class="chat-area" id="chatArea">
+
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcomeScreen">
+
+                    <div class="welcome-icon">✦</div>
+
+                    <p class="eyebrow">
+                        YOUR AI DOCUMENT ASSISTANT
+                    </p>
+
+                    <h1>
+                        Your documents,<br>
+                        <span>understood.</span>
+                    </h1>
+
+                    <p class="welcome-description">
+                        Upload documents, ask questions, summarize content,
+                        and explore information with your AI assistant.
+                    </p>
+
+
+                    <!-- Quick Suggestions -->
+                    <div class="suggestion-grid">
+
+                        <button class="suggestion-card" type="button"
+                            data-prompt="Give me a concise summary of the uploaded document.">
+                            <span class="suggestion-icon">▤</span>
+
+                            <strong>Summarize</strong>
+
+                            <small>
+                                Get the key points from a document.
+                            </small>
+                        </button>
+
+
+                        <button class="suggestion-card" type="button"
+                            data-prompt="Explain the important concepts in the uploaded document in simple language.">
+                            <span class="suggestion-icon">✧</span>
+
+                            <strong>Explain simply</strong>
+
+                            <small>
+                                Understand difficult concepts.
+                            </small>
+                        </button>
+
+
+                        <button class="suggestion-card" type="button"
+                            data-prompt="Create useful study notes from the uploaded document.">
+                            <span class="suggestion-icon">☷</span>
+
+                            <strong>Study mode</strong>
+
+                            <small>
+                                Create notes and revision material.
+                            </small>
+                        </button>
+
+
+                        <button class="suggestion-card" type="button"
+                            data-prompt="Analyze the uploaded document and identify the most important insights.">
+                            <span class="suggestion-icon">◈</span>
+
+                            <strong>Analyze</strong>
+
+                            <small>
+                                Discover important insights.
+                            </small>
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Document Insights -->
+                <section class="insights-panel" id="insightsPanel">
+
+                    <div class="insights-header">
+
+                        <div>
+                            <p class="eyebrow">
+                                DOCUMENT INTELLIGENCE
+                            </p>
+
+                            <h2>
+                                Document insights
+                            </h2>
+
+                            <p class="insights-description">
+                                Explore a quick visual overview of your document.
+                            </p>
+                        </div>
+
+                        <span class="demo-badge">
+                            Demo data
+                        </span>
+
+                    </div>
+
+
+                    <!-- Insight Summary Cards -->
+                    <div class="insights-grid">
+
+                        <div class="insight-card">
+                            <span class="insight-label">
+                                Document type
+                            </span>
+
+                            <strong>
+                                Research report
+                            </strong>
+
+                            <small>
+                                Detected category
+                            </small>
+                        </div>
+
+
+                        <div class="insight-card">
+                            <span class="insight-label">
+                                Key topics
+                            </span>
+
+                            <strong>
+                                6 topics
+                            </strong>
+
+                            <small>
+                                Main concepts identified
+                            </small>
+                        </div>
+
+
+                        <div class="insight-card">
+                            <span class="insight-label">
+                                Reading time
+                            </span>
+
+                            <strong>
+                                8 minutes
+                            </strong>
+
+                            <small>
+                                Estimated reading duration
+                            </small>
+                        </div>
+
+                    </div>
+
+
+                    <!-- Lower Insights -->
+                    <div class="insights-lower-grid">
+
+                        <!-- Key Topics -->
+                        <div class="insight-box">
+
+                            <h3>
+                                Key topics
+                            </h3>
+
+
+                            <div class="topic-row">
+                                <span>
+                                    Artificial intelligence
+                                </span>
+
+                                <div class="topic-bar">
+                                    <span style="width: 90%;"></span>
+                                </div>
+                            </div>
+
+
+                            <div class="topic-row">
+                                <span>
+                                    Document analysis
+                                </span>
+
+                                <div class="topic-bar">
+                                    <span style="width: 75%;"></span>
+                                </div>
+                            </div>
+
+
+                            <div class="topic-row">
+                                <span>
+                                    Data processing
+                                </span>
+
+                                <div class="topic-bar">
+                                    <span style="width: 60%;"></span>
+                                </div>
+                            </div>
+
+
+                            <div class="topic-row">
+                                <span>
+                                    Search and retrieval
+                                </span>
+
+                                <div class="topic-bar">
+                                    <span style="width: 45%;"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <!-- Document Overview -->
+                        <div class="insight-box">
+
+                            <h3>
+                                Document overview
+                            </h3>
+
+                            <p class="overview-text">
+                                This document discusses how artificial intelligence
+                                can help users understand, search, and compare
+                                information across documents.
+                            </p>
+
+
+                            <div class="overview-stat">
+                                <span>
+                                    Estimated complexity
+                                </span>
+
+                                <strong>
+                                    Moderate
+                                </strong>
+                            </div>
+
+
+                            <div class="overview-stat">
+                                <span>
+                                    Analysis status
+                                </span>
+
+                                <strong class="status-ready">
+                                    Ready for review
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- Chat Messages -->
+                <div class="messages" id="messages"></div>
+
+                <section id="uploaded-documents-area" class="document-management-area" aria-label="Uploaded documents">
+                    <div class="document-management-header">
+                        <div>
+                            <h3>Uploaded documents</h3>
+                            <p id="document-count">0 documents uploaded</p>
+                        </div>
+
+                        <button id="compare-selected-btn" class="primary-button" type="button" disabled>
+                            Compare selected
+                        </button>
+                    </div>
+
+                    <div id="document-upload-progress" class="document-upload-progress" aria-live="polite"></div>
+
+                    <div id="uploaded-documents-list" class="uploaded-documents-list"></div>
+                </section>
+
+            </section>
+
+
+            <!-- Compare Documents -->
+            <section class="comparison-panel" id="comparisonPanel">
+
+                <div class="comparison-header">
+
+                    <div>
+                        <p class="eyebrow">
+                            DOCUMENT COMPARISON
+                        </p>
+
+                        <h2>
+                            Compare documents
+                        </h2>
+
+                        <p class="comparison-description">
+                            Explore similarities and differences between two documents.
+                        </p>
+                    </div>
+
+                    <span class="demo-badge">
+                        Demo data
+                    </span>
+
+                </div>
+
+
+                <!-- Document Cards -->
+                <div class="document-select-grid">
+
+                    <div class="document-preview">
+
+                        <span class="document-number">
+                            DOCUMENT A
+                        </span>
+
+                        <h3>
+                            Artificial Intelligence Report
+                        </h3>
+
+                        <p>
+                            A report about AI systems, document understanding,
+                            and automated information extraction.
+                        </p>
+
+                        <span class="document-meta">
+                            Research report · 12 pages
+                        </span>
+
+                    </div>
+
+
+                    <div class="document-preview">
+
+                        <span class="document-number">
+                            DOCUMENT B
+                        </span>
+
+                        <h3>
+                            Document Analysis Guide
+                        </h3>
+
+                        <p>
+                            A guide explaining document processing, search,
+                            retrieval, and knowledge discovery.
+                        </p>
+
+                        <span class="document-meta">
+                            Technical guide · 9 pages
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Comparison Summary -->
+                <div class="comparison-summary">
+
+                    <div class="comparison-summary-card">
+
+                        <span class="insight-label">
+                            Shared topics
+                        </span>
+
+                        <strong>
+                            4 topics
+                        </strong>
+
+                        <small>
+                            Topics found in both documents
+                        </small>
+
+                    </div>
+
+
+                    <div class="comparison-summary-card">
+
+                        <span class="insight-label">
+                            Unique topics
+                        </span>
+
+                        <strong>
+                            5 topics
+                        </strong>
+
+                        <small>
+                            Topics found in only one document
+                        </small>
+
+                    </div>
+
+
+                    <div class="comparison-summary-card">
+
+                        <span class="insight-label">
+                            Similarity
+                        </span>
+
+                        <strong>
+                            72%
+                        </strong>
+
+                        <small>
+                            Illustrative similarity score
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Similarities and Differences -->
+                <div class="comparison-details-grid">
+
+                    <div class="comparison-box">
+
+                        <h3>
+                            Similarities
+                        </h3>
+
+                        <ul class="comparison-list">
+                            <li>
+                                Both discuss artificial intelligence.
+                            </li>
+
+                            <li>
+                                Both explain document analysis.
+                            </li>
+
+                            <li>
+                                Both mention information retrieval.
+                            </li>
+
+                            <li>
+                                Both focus on extracting useful knowledge.
+                            </li>
+                        </ul>
+
+                    </div>
+
+
+                    <div class="comparison-box">
+
+                        <h3>
+                            Differences
+                        </h3>
+
+                        <ul class="comparison-list">
+                            <li>
+                                Document A focuses on AI applications.
+                            </li>
+
+                            <li>
+                                Document B focuses on processing workflows.
+                            </li>
+
+                            <li>
+                                Document A is research-oriented.
+                            </li>
+
+                            <li>
+                                Document B is more instructional.
+                            </li>
+                        </ul>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Topic Comparison Table -->
+                <div class="comparison-table-wrapper">
+
+                    <h3>
+                        Topic comparison
+                    </h3>
+
+                    <table class="comparison-table">
+
+                        <thead>
+                            <tr>
+                                <th>
+                                    Topic
+                                </th>
+
+                                <th>
+                                    Document A
+                                </th>
+
+                                <th>
+                                    Document B
+                                </th>
+                            </tr>
+                        </thead>
+
+
+                        <tbody>
+
+                            <tr>
+                                <td>
+                                    Artificial intelligence
+                                </td>
+
+                                <td>
+                                    <span class="table-status yes">
+                                        Covered
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="table-status yes">
+                                        Covered
+                                    </span>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>
+                                    Document analysis
+                                </td>
+
+                                <td>
+                                    <span class="table-status yes">
+                                        Covered
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="table-status yes">
+                                        Covered
+                                    </span>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>
+                                    Information retrieval
+                                </td>
+
+                                <td>
+                                    <span class="table-status partial">
+                                        Partial
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="table-status yes">
+                                        Covered
+                                    </span>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>
+                                    AI applications
+                                </td>
+
+                                <td>
+                                    <span class="table-status yes">
+                                        Covered
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="table-status no">
+                                        Not covered
+                                    </span>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>
+                                    Processing workflow
+                                </td>
+
+                                <td>
+                                    <span class="table-status no">
+                                        Not covered
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="table-status yes">
+                                        Covered
+                                    </span>
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <!-- Message Input Area -->
+            <div class="input-section">
+
+                <div class="input-wrapper">
+
+                    <!-- Upload Button -->
+                    <label class="attach-button" for="document-upload" title="Upload document"
+                        aria-label="Upload document">
+                        📎
+                    </label>
+
+
+                    <!-- Hidden File Input -->
+                    <input id="document-upload" type="file" accept=".pdf,.docx,.txt" multiple hidden>
+
+
+                    <!-- Message Input -->
+                    <textarea id="messageInput" placeholder="Ask DocTalk anything..." rows="1"></textarea>
+
+
+                    <!-- Send Button -->
+                    <button id="sendBtn" class="send-btn" type="button" title="Send message" aria-label="Send message">
+                        ↑
+                    </button>
+
+                </div>
+
+
+                <!-- Upload Status -->
+                <p id="upload-status" class="upload-status" aria-live="polite"></p>
+
+
+                <p class="input-hint">
+                    DocTalk can help you understand and analyze your documents.
+                </p>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
