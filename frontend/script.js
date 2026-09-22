@@ -242,6 +242,11 @@ async function loadConversation(id) {
 function renderDocuments() {
 
     if (!list) return;
+    
+    const docArea = document.getElementById("uploaded-documents-area");
+    if (docArea) {
+        docArea.style.display = uploadedDocuments.length ? "block" : "none";
+    }
 
     count.textContent =
         `${uploadedDocuments.length} document${
@@ -601,6 +606,7 @@ $("newChatBtn")?.addEventListener(
         uploadedDocuments = [];
         selectedDocumentIds = new Set();
         currentConversationId = null;
+        if (progress) progress.textContent = "";
         renderDocuments();
         renderConversations(); // Remove active state
 
