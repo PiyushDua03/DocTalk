@@ -146,6 +146,8 @@ function addMessage(text, role, sources) {
 
 function showWorkspace(id) {
 
+    var hidePanels = ["comparisonPanel", "myDocumentsPanel", "architecturePanel"];
+
     document
         .querySelectorAll(".sidebar-item[data-target]")
         .forEach(function(x) {
@@ -154,7 +156,7 @@ function showWorkspace(id) {
 
     if (chatArea) {
         chatArea.style.display =
-            (id === "comparisonPanel" || id === "myDocumentsPanel") ? "none" : "block";
+            hidePanels.indexOf(id) !== -1 ? "none" : "block";
     }
 
     if (comparisonPanel) {
@@ -180,6 +182,14 @@ function showWorkspace(id) {
         if (id === "myDocumentsPanel" && typeof loadMyDocuments === "function") {
             loadMyDocuments();
         }
+    }
+
+    var archPanel = document.getElementById("architecturePanel");
+    if (archPanel) {
+        archPanel.classList.toggle(
+            "active",
+            id === "architecturePanel"
+        );
     }
 
     if (welcomeScreen) {

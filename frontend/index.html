@@ -66,6 +66,12 @@
                     <span>My Documents</span>
                 </div>
 
+                <!-- How It Works -->
+                <div class="sidebar-item" data-target="architecturePanel" role="button" tabindex="0">
+                    <span>⚙</span>
+                    <span>How It Works</span>
+                </div>
+
             </div>
 
             <div class="sidebar-bottom">
@@ -419,6 +425,181 @@
 
                 <div id="my-documents-list" class="my-documents-list">
                     <p class="empty-state">No documents in your library.</p>
+                </div>
+
+            </section>
+
+
+            <!-- Architecture / How It Works Panel -->
+            <section class="architecture-panel" id="architecturePanel">
+
+                <div class="arch-header">
+                    <p class="eyebrow">AI AGENT ARCHITECTURE</p>
+                    <h2>How DocTalk Works</h2>
+                    <p class="arch-subtitle">Six Azure AI services working together as intelligent agents</p>
+                </div>
+
+
+                <!-- Pipeline 1: Document Ingestion -->
+                <div class="arch-pipeline">
+                    <div class="arch-pipeline-label">
+                        <span class="arch-pipeline-badge ingest">INGESTION PIPELINE</span>
+                        <span class="arch-pipeline-desc">When you upload a document</span>
+                    </div>
+
+                    <div class="arch-flow">
+
+                        <div class="arch-node">
+                            <div class="arch-node-icon upload">⬆</div>
+                            <div class="arch-node-body">
+                                <strong>User Upload</strong>
+                                <small>PDF, DOCX, TXT files</small>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node">
+                            <div class="arch-node-icon azure-blue">☁</div>
+                            <div class="arch-node-body">
+                                <strong>Azure Blob Storage</strong>
+                                <small>Secure cloud storage</small>
+                                <span class="arch-tag">doctalkstorage01</span>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad2)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node">
+                            <div class="arch-node-icon violet">🧠</div>
+                            <div class="arch-node-body">
+                                <strong>Azure Document Intelligence</strong>
+                                <small>OCR + text extraction + layout analysis</small>
+                                <span class="arch-tag">prebuilt-read model</span>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad3)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad3" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node">
+                            <div class="arch-node-icon slate">▦</div>
+                            <div class="arch-node-body">
+                                <strong>Chunking Engine</strong>
+                                <small>500-char chunks, 50-char overlap</small>
+                                <span class="arch-tag">document_id tagged</span>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad4)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad4" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node highlight-cyan">
+                            <div class="arch-node-icon cyan">🔍</div>
+                            <div class="arch-node-body">
+                                <strong>Azure AI Search</strong>
+                                <small>Hybrid vector + keyword index</small>
+                                <span class="arch-tag">doctalk-search-rag</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <!-- Bridge -->
+                <div class="arch-bridge">
+                    <div class="arch-bridge-line"></div>
+                    <div class="arch-bridge-label">Azure AI Search is the bridge between ingestion and retrieval</div>
+                    <div class="arch-bridge-line"></div>
+                </div>
+
+
+                <!-- Pipeline 2: RAG Query -->
+                <div class="arch-pipeline">
+                    <div class="arch-pipeline-label">
+                        <span class="arch-pipeline-badge rag">RAG QUERY PIPELINE</span>
+                        <span class="arch-pipeline-desc">When you ask a question</span>
+                    </div>
+
+                    <div class="arch-flow">
+
+                        <div class="arch-node">
+                            <div class="arch-node-icon upload">💬</div>
+                            <div class="arch-node-body">
+                                <strong>User Question</strong>
+                                <small>Natural language query</small>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad5)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad5" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#22D3EE"/><stop offset="100%" stop-color="#6366F1"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node highlight-cyan">
+                            <div class="arch-node-icon cyan">🔍</div>
+                            <div class="arch-node-body">
+                                <strong>Azure AI Search</strong>
+                                <small>Hybrid retrieval + document_id filtering</small>
+                                <span class="arch-tag">top_k=5</span>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad6)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad6" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#22D3EE"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node">
+                            <div class="arch-node-icon slate">☰</div>
+                            <div class="arch-node-body">
+                                <strong>Context Builder</strong>
+                                <small>Top 5 relevant chunks assembled</small>
+                                <span class="arch-tag">with source metadata</span>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad7)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad7" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#6366F1"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node highlight-primary">
+                            <div class="arch-node-icon primary">✦</div>
+                            <div class="arch-node-body">
+                                <strong>Azure AI Foundry</strong>
+                                <small>GPT-4o-mini RAG answer generation</small>
+                                <span class="arch-tag">DocTalk-Agent</span>
+                            </div>
+                        </div>
+
+                        <div class="arch-arrow">
+                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad8)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad8" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22C55E"/></linearGradient></defs></svg>
+                        </div>
+
+                        <div class="arch-node highlight-green">
+                            <div class="arch-node-icon green">✓</div>
+                            <div class="arch-node-body">
+                                <strong>Response + Sources</strong>
+                                <small>Answer with document_name + page citations</small>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <!-- Azure Service Badges -->
+                <div class="arch-badges">
+                    <div class="arch-badge azure-blue">☁ Azure Blob Storage</div>
+                    <div class="arch-badge violet">🧠 Document Intelligence</div>
+                    <div class="arch-badge cyan">🔍 Azure AI Search</div>
+                    <div class="arch-badge primary">✦ Azure AI Foundry</div>
+                    <div class="arch-badge green">🤖 GPT-4o-mini</div>
                 </div>
 
             </section>
