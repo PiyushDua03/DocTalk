@@ -1,27 +1,27 @@
-const API_URL = "http://127.0.0.1:8000";
+var API_URL = "http://127.0.0.1:8000";
 
-let uploadedDocuments = [];
-let selectedDocumentIds = new Set();
-let busy = false;
-let currentConversationId = null;
-let conversations = [];
+var uploadedDocuments = [];
+var selectedDocumentIds = new Set();
+var busy = false;
+var currentConversationId = null;
+var conversations = [];
 
-const $ = (id) => document.getElementById(id);
+function $(id) { return document.getElementById(id); }
 
-const messages = $("messages");
-const welcomeScreen = $("welcomeScreen");
-const messageInput = $("messageInput");
-const sendBtn = $("sendBtn");
-const uploadInput = $("document-upload");
-const uploadStatus = $("upload-status");
-const progress = $("document-upload-progress");
-const list = $("uploaded-documents-list");
-const count = $("document-count");
-const compareBtn = $("compare-selected-btn");
-const comparisonPanel = $("comparisonPanel");
-const chatArea = $("chatArea");
-const insightsPanel = $("insightsPanel");
-const conversationList = $("conversationList");
+var messages = $("messages");
+var welcomeScreen = $("welcomeScreen");
+var messageInput = $("messageInput");
+var sendBtn = $("sendBtn");
+var uploadInput = $("document-upload");
+var uploadStatus = $("upload-status");
+var progress = $("document-upload-progress");
+var list = $("uploaded-documents-list");
+var count = $("document-count");
+var compareBtn = $("compare-selected-btn");
+var comparisonPanel = $("comparisonPanel");
+var chatArea = $("chatArea");
+var insightsPanel = $("insightsPanel");
+var conversationList = $("conversationList");
 
 
 /* =========================
@@ -29,28 +29,46 @@ const conversationList = $("conversationList");
 ========================= */
 
 function escapeHtml(value) {
-    return String(value ?? "").replace(
+    return String(value != null ? value : "").replace(
         /[&<>"']/g,
-        (c) => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        }[c])
+        function(c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c];
+        }
     );
 }
 
 
-function setStatus(text, error = false) {
+function setStatus(text, error) {
     if (uploadStatus) {
         uploadStatus.textContent = text;
-        uploadStatus.classList.toggle("error", error);
+        uploadStatus.classList.toggle("error", !!error);
     }
 }
 
 
-function addMessage(text, role = "assistant") {
+/**
+ * Render simple markdown: **bold**, *italic*, bullet lists, numbered lists.
+ * Returns safe HTML string (all content is escaped first).
+ */
+function renderMarkdown(text) {
+    var escaped = escapeHtml(text);
+    // Bold
+    escaped = escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    // Italic
+    escaped = escaped.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    // Bullet lists
+    escaped = escaped.replace(/^[-•]\s+(.+)$/gm, "<li>$1</li>");
+    // Numbered lists
+    escaped = escaped.replace(/^\d+\.\s+(.+)$/gm, "<li>$1</li>");
+    // Wrap consecutive <li> in <ul>
+    escaped = escaped.replace(/((?:<li>.*?<\/li>\s*)+)/g, "<ul>$1</ul>");
+    // Paragraphs
+    escaped = escaped.replace(/\n\n/g, "<br><br>");
+    return escaped;
+}
+
+
+function addMessage(text, role, sources) {
     if (!messages) return;
 
     if (welcomeScreen) {
@@ -59,19 +77,58 @@ function addMessage(text, role = "assistant") {
 
     messages.style.display = "flex";
 
-    const el = document.createElement("div");
-    el.className = `message ${role}`;
+    var el = document.createElement("div");
+    el.className = "message " + (role || "assistant");
 
-    if (role === "assistant") {
-        const avatar = document.createElement("div");
+    if (role === "assistant" || !role) {
+        var avatar = document.createElement("div");
         avatar.className = "avatar";
-        avatar.textContent = "✦";
+        avatar.textContent = "\u2726";
         el.appendChild(avatar);
     }
 
-    const content = document.createElement("div");
+    var content = document.createElement("div");
     content.className = "message-content";
-    content.textContent = text;
+
+    // Try to detect visualization data
+    var vizData = (typeof tryParseVisualization === "function") ? tryParseVisualization(text) : null;
+
+    if (vizData) {
+        // Remove JSON from display text
+        var cleanText = text.replace(/```json[\s\S]*?```/g, "").replace(/\{[\s\S]*"type"[\s\S]*\}/g, "").trim();
+        if (cleanText) {
+            var textP = document.createElement("div");
+            textP.innerHTML = renderMarkdown(cleanText);
+            content.appendChild(textP);
+        }
+        if (typeof renderVisualization === "function") {
+            renderVisualization(vizData, content);
+        }
+    } else {
+        content.innerHTML = renderMarkdown(text);
+    }
+
+    // Display sources if available
+    if (sources && sources.length > 0) {
+        var srcDiv = document.createElement("div");
+        srcDiv.className = "message-sources";
+
+        var srcLabel = document.createElement("span");
+        srcLabel.className = "sources-label";
+        srcLabel.textContent = "Sources";
+        srcDiv.appendChild(srcLabel);
+
+        for (var i = 0; i < sources.length; i++) {
+            var s = sources[i];
+            var srcItem = document.createElement("span");
+            srcItem.className = "source-item";
+            var docName = s.document_name || "Document";
+            var pageNum = s.page_number != null ? " \u2014 Page " + s.page_number : "";
+            srcItem.textContent = "\uD83D\uDCC4 " + docName + pageNum;
+            srcDiv.appendChild(srcItem);
+        }
+        content.appendChild(srcDiv);
+    }
 
     el.appendChild(content);
     messages.appendChild(el);
@@ -91,13 +148,13 @@ function showWorkspace(id) {
 
     document
         .querySelectorAll(".sidebar-item[data-target]")
-        .forEach((x) => {
+        .forEach(function(x) {
             x.classList.toggle("active", x.dataset.target === id);
         });
 
     if (chatArea) {
         chatArea.style.display =
-            id === "comparisonPanel" ? "none" : "block";
+            (id === "comparisonPanel" || id === "myDocumentsPanel") ? "none" : "block";
     }
 
     if (comparisonPanel) {
@@ -114,6 +171,17 @@ function showWorkspace(id) {
         );
     }
 
+    var myDocsPanel = document.getElementById("myDocumentsPanel");
+    if (myDocsPanel) {
+        myDocsPanel.classList.toggle(
+            "active",
+            id === "myDocumentsPanel"
+        );
+        if (id === "myDocumentsPanel" && typeof loadMyDocuments === "function") {
+            loadMyDocuments();
+        }
+    }
+
     if (welcomeScreen) {
         welcomeScreen.style.display =
             id === "chatArea" ? "block" : "none";
@@ -123,8 +191,8 @@ function showWorkspace(id) {
 
 document
     .querySelectorAll(".sidebar-item[data-target]")
-    .forEach((x) => {
-        x.addEventListener("click", () => {
+    .forEach(function(x) {
+        x.addEventListener("click", function() {
             showWorkspace(x.dataset.target);
         });
     });
@@ -136,7 +204,7 @@ document
 
 async function loadConversations() {
     try {
-        const response = await fetch(`${API_URL}/conversations`);
+        var response = await fetch(API_URL + "/conversations");
         if (response.ok) {
             conversations = await response.json();
             renderConversations();
@@ -148,17 +216,13 @@ async function loadConversations() {
 
 function renderConversations() {
     if (!conversationList) return;
-    
-    conversationList.innerHTML = conversations.map(c => `
-        <li class="conversation-item ${c.conversation_id === currentConversationId ? 'active' : ''}" 
-            data-id="${escapeHtml(c.conversation_id)}" 
-            title="${escapeHtml(c.title)}">
-            ${escapeHtml(c.title)}
-        </li>
-    `).join("");
 
-    conversationList.querySelectorAll(".conversation-item").forEach(item => {
-        item.addEventListener("click", () => {
+    conversationList.innerHTML = conversations.map(function(c) {
+        return '<li class="conversation-item ' + (c.conversation_id === currentConversationId ? "active" : "") + '" data-id="' + escapeHtml(c.conversation_id) + '" title="' + escapeHtml(c.title) + '">' + escapeHtml(c.title) + '</li>';
+    }).join("");
+
+    conversationList.querySelectorAll(".conversation-item").forEach(function(item) {
+        item.addEventListener("click", function() {
             loadConversation(item.dataset.id);
         });
     });
@@ -169,11 +233,11 @@ async function loadConversation(id) {
     busy = true;
 
     try {
-        const response = await fetch(`${API_URL}/conversations/${id}`);
+        var response = await fetch(API_URL + "/conversations/" + id);
         if (!response.ok) throw new Error("Failed to load chat");
-        
-        const data = await response.json();
-        
+
+        var data = await response.json();
+
         currentConversationId = data.conversation_id;
         messages.innerHTML = "";
         welcomeScreen.style.display = "none";
@@ -181,36 +245,36 @@ async function loadConversation(id) {
         showWorkspace("chatArea");
 
         // Restore messages
-        data.messages.forEach(msg => {
-            const el = document.createElement("div");
-            el.className = `message ${msg.role}`;
+        data.messages.forEach(function(msg) {
+            var el = document.createElement("div");
+            el.className = "message " + msg.role;
             if (msg.role === "assistant") {
-                const avatar = document.createElement("div");
-                avatar.className = "avatar";
-                avatar.textContent = "✦";
-                el.appendChild(avatar);
+                var av = document.createElement("div");
+                av.className = "avatar";
+                av.textContent = "\u2726";
+                el.appendChild(av);
             }
-            const content = document.createElement("div");
-            content.className = "message-content";
-            content.textContent = msg.content;
-            el.appendChild(content);
+            var ct = document.createElement("div");
+            ct.className = "message-content";
+            ct.textContent = msg.content;
+            el.appendChild(ct);
             messages.appendChild(el);
         });
-        
+
         // Scroll to bottom
-        const lastEl = messages.lastElementChild;
+        var lastEl = messages.lastElementChild;
         if (lastEl) lastEl.scrollIntoView({ behavior: "smooth", block: "end" });
 
         // Restore document IDs
-        // We will fetch document metadata to populate uploadedDocuments properly
         uploadedDocuments = [];
         selectedDocumentIds = new Set();
-        
-        for (const docId of data.document_ids) {
+
+        for (var di = 0; di < (data.document_ids || []).length; di++) {
+            var docId = data.document_ids[di];
             try {
-                const docRes = await fetch(`${API_URL}/documents/${docId}`);
+                var docRes = await fetch(API_URL + "/documents/" + docId);
                 if (docRes.ok) {
-                    const docData = await docRes.json();
+                    var docData = await docRes.json();
                     uploadedDocuments.push({
                         id: docData.document_id,
                         filename: docData.filename,
@@ -218,11 +282,11 @@ async function loadConversation(id) {
                         characters: docData.character_count
                     });
                 }
-            } catch (e) {
-                console.error("Failed to restore document:", docId, e);
+            } catch (e2) {
+                console.error("Failed to restore document:", docId, e2);
             }
         }
-        
+
         renderDocuments();
         renderConversations();
 
@@ -242,70 +306,49 @@ async function loadConversation(id) {
 function renderDocuments() {
 
     if (!list) return;
-    
-    const docArea = document.getElementById("uploaded-documents-area");
+
+    var docArea = document.getElementById("uploaded-documents-area");
     if (docArea) {
         docArea.style.display = uploadedDocuments.length ? "block" : "none";
     }
 
-    count.textContent =
-        `${uploadedDocuments.length} document${
-            uploadedDocuments.length === 1 ? "" : "s"
-        } uploaded`;
+    if (count) {
+        count.textContent =
+            uploadedDocuments.length + " document" +
+            (uploadedDocuments.length === 1 ? "" : "s") +
+            " in session";
+    }
 
-    compareBtn.disabled =
-        selectedDocumentIds.size < 2 ||
-        selectedDocumentIds.size > 2;
+    if (compareBtn) {
+        compareBtn.disabled = selectedDocumentIds.size < 2;
+    }
 
     list.innerHTML =
         uploadedDocuments.length
             ? uploadedDocuments
-                  .map(
-                      (doc) => `
-        <article class="uploaded-document-card">
-
-            <label>
-                <input
-                    type="checkbox"
-                    data-doc-id="${escapeHtml(doc.id)}"
-                    ${
-                        selectedDocumentIds.has(doc.id)
-                            ? "checked"
-                            : ""
-                    }
-                >
-
-                <strong>
-                    ${escapeHtml(doc.filename)}
-                </strong>
-            </label>
-
-            <small>
-                ${
-                    doc.page_count
-                        ? `${doc.page_count} pages`
-                        : "Document"
-                }
-                ·
-                ${Number(doc.characters || 0).toLocaleString()}
-                characters
-            </small>
-
-        </article>
-        `
-                  )
+                  .map(function(doc) {
+                      return '<article class="uploaded-document-card">' +
+                          '<label>' +
+                              '<input type="checkbox" data-doc-id="' + escapeHtml(doc.id || doc.document_id) + '"' +
+                              (selectedDocumentIds.has(doc.id || doc.document_id) ? " checked" : "") +
+                              '>' +
+                              '<strong>' + escapeHtml(doc.filename) + '</strong>' +
+                          '</label>' +
+                          '<small>' +
+                              (doc.page_count ? doc.page_count + " pages" : "Document") +
+                              ' \u00B7 ' +
+                              Number(doc.characters || 0).toLocaleString() + ' characters' +
+                          '</small>' +
+                      '</article>';
+                  })
                   .join("")
-            : `
-        <p class="empty-state">
-            Upload PDF, DOCX, or TXT files to see them here.
-        </p>
-        `;
+            : '<p class="empty-state">Upload PDF, DOCX, or TXT files to see them here.</p>';
 
     list
         .querySelectorAll("input[data-doc-id]")
-        .forEach((box) => {
+        .forEach(function(box) {
 
-            box.addEventListener("change", () => {
+            box.addEventListener("change", function() {
 
                 if (box.checked) {
                     selectedDocumentIds.add(box.dataset.docId);
@@ -314,6 +357,7 @@ function renderDocuments() {
                 }
 
                 renderDocuments();
+                if (typeof updateCompareButton === "function") updateCompareButton();
             });
         });
 }
@@ -325,31 +369,28 @@ function renderDocuments() {
 
 async function uploadFile(file) {
 
-    const form = new FormData();
-
+    var form = new FormData();
     form.append("file", file);
 
-    const response = await fetch(
-        `${API_URL}/upload`,
+    var response = await fetch(
+        API_URL + "/upload",
         {
             method: "POST",
             body: form
         }
     );
 
-    const data =
-        await response.json().catch(() => ({}));
+    var data =
+        await response.json().catch(function() { return {}; });
 
     if (!response.ok) {
         throw new Error(
             data.detail ||
-            `Upload failed (${response.status})`
+            "Upload failed (" + response.status + ")"
         );
     }
 
-    // Store the document_id returned by the backend
-    // so the /chat endpoint knows which documents
-    // belong to this session.
+    // Store the document_id
     if (data.document_id) {
         data.id = data.document_id;
     }
@@ -362,42 +403,57 @@ if (uploadInput) {
 
     uploadInput.addEventListener(
         "change",
-        async () => {
+        async function() {
 
-            const files = [...uploadInput.files];
+            var files = Array.from(uploadInput.files);
 
             if (!files.length) return;
 
             setStatus(
-                `Uploading ${files.length} file${
-                    files.length > 1 ? "s" : ""
-                }…`
+                "Uploading " + files.length + " file" +
+                (files.length > 1 ? "s" : "") + "\u2026"
             );
 
-            progress.textContent = "";
+            if (progress) progress.textContent = "";
 
-            for (let i = 0; i < files.length; i++) {
+            for (var i = 0; i < files.length; i++) {
 
                 try {
 
-                    const doc =
-                        await uploadFile(files[i]);
+                    if (progress) {
+                        progress.textContent =
+                            "Uploading " + (i + 1) + " of " + files.length + ": " + files[i].name + "\u2026";
+                    }
+
+                    var doc = await uploadFile(files[i]);
 
                     uploadedDocuments.push(doc);
 
-                    progress.textContent =
-                        `Uploaded ${i + 1} of ${files.length}: ${files[i].name}`;
+                    // Auto-select newly uploaded documents
+                    if (doc.id) {
+                        selectedDocumentIds.add(doc.id);
+                    }
+
+                    if (progress) {
+                        progress.textContent =
+                            "\u2713 Uploaded " + (i + 1) + " of " + files.length + ": " + files[i].name;
+                    }
 
                 } catch (e) {
 
-                    progress.textContent =
-                        `Could not upload ${files[i].name}: ${e.message}`;
+                    if (progress) {
+                        progress.textContent =
+                            "\u2717 Failed: " + files[i].name + " \u2014 " + e.message;
+                    }
                 }
             }
 
             renderDocuments();
 
             setStatus("Upload complete.");
+
+            // Refresh My Documents
+            if (typeof loadMyDocuments === "function") loadMyDocuments();
 
             uploadInput.value = "";
         }
@@ -411,8 +467,7 @@ if (uploadInput) {
 
 async function sendMessage() {
 
-    const message =
-        messageInput?.value.trim();
+    var message = messageInput ? messageInput.value.trim() : "";
 
     if (!message || busy) return;
 
@@ -428,67 +483,59 @@ async function sendMessage() {
 
 
     /* Typing indicator */
-
-    const typing =
-        document.createElement("div");
-
-    typing.className = "message assistant";
+    var typing = document.createElement("div");
+    typing.className = "message assistant typing-indicator";
     typing.id = "typingMessage";
-    typing.textContent = "DocTalk is thinking…";
+
+    var typingAvatar = document.createElement("div");
+    typingAvatar.className = "avatar";
+    typingAvatar.textContent = "\u2726";
+    typing.appendChild(typingAvatar);
+
+    var typingContent = document.createElement("div");
+    typingContent.className = "message-content";
+    typingContent.textContent = "DocTalk is thinking\u2026";
+    typing.appendChild(typingContent);
 
     messages.appendChild(typing);
+    typing.scrollIntoView({ behavior: "smooth", block: "end" });
 
 
     try {
 
         /*
-         * SESSION-SCOPED CHAT:
-         *
-         * Backend expects a JSON body with:
-         * {
-         *     "message": "...",
-         *     "document_ids": ["id1", "id2"]
-         * }
-         *
-         * Only the documents uploaded in THIS session
-         * are sent. The backend will not use any other
-         * documents.
+         * Send ONLY the selected document IDs,
+         * not all uploaded documents.
          */
+        var docIds = Array.from(selectedDocumentIds);
 
-        const sessionDocIds =
-            uploadedDocuments
-                .filter((d) => d.id || d.document_id)
-                .map((d) => d.id || d.document_id);
-
-        const response =
+        var response =
             await fetch(
-                `${API_URL}/chat`,
+                API_URL + "/chat",
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
                         message: message,
-                        document_ids: sessionDocIds,
+                        document_ids: docIds,
                         conversation_id: currentConversationId
                     })
                 }
             );
 
 
-        const data =
+        var data =
             await response
                 .json()
-                .catch(() => ({}));
+                .catch(function() { return {}; });
 
 
         if (!response.ok) {
-
             throw new Error(
                 data.detail ||
-                `Request failed (${response.status})`
+                "Request failed (" + response.status + ")"
             );
         }
 
@@ -497,16 +544,13 @@ async function sendMessage() {
             if (!currentConversationId) {
                 currentConversationId = data.conversation_id;
             }
-            // Refresh conversation list to show the new title or updated timestamp
             loadConversations();
         }
 
-        addMessage(
-            data.response ||
-            data.answer ||
-            data.message ||
-            "No response returned."
-        );
+        var responseText = data.response || data.answer || data.message || "No response returned.";
+        var sources = data.sources || [];
+
+        addMessage(responseText, "assistant", sources);
 
 
     } catch (e) {
@@ -514,12 +558,14 @@ async function sendMessage() {
         console.error("Chat error:", e);
 
         addMessage(
-            `Sorry, the request failed: ${e.message}.`
+            "Sorry, the request failed: " + e.message + ".",
+            "assistant"
         );
 
     } finally {
 
-        $("typingMessage")?.remove();
+        var typingEl = $("typingMessage");
+        if (typingEl) typingEl.remove();
 
         busy = false;
 
@@ -527,7 +573,7 @@ async function sendMessage() {
             sendBtn.disabled = false;
         }
 
-        messageInput?.focus();
+        if (messageInput) messageInput.focus();
     }
 }
 
@@ -536,27 +582,21 @@ async function sendMessage() {
    CHAT BUTTON / ENTER
 ========================= */
 
-sendBtn?.addEventListener(
-    "click",
-    sendMessage
-);
+if (sendBtn) {
+    sendBtn.addEventListener("click", sendMessage);
+}
 
-
-messageInput?.addEventListener(
-    "keydown",
-    (e) => {
-
-        if (
-            e.key === "Enter" &&
-            !e.shiftKey
-        ) {
-
-            e.preventDefault();
-
-            sendMessage();
+if (messageInput) {
+    messageInput.addEventListener(
+        "keydown",
+        function(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
         }
-    }
-);
+    );
+}
 
 
 /* =========================
@@ -565,16 +605,13 @@ messageInput?.addEventListener(
 
 document
     .querySelectorAll(".suggestion-card")
-    .forEach((x) => {
-
+    .forEach(function(x) {
         x.addEventListener(
             "click",
-            () => {
-
+            function() {
                 messageInput.value =
                     x.dataset.prompt ||
                     x.textContent.trim();
-
                 sendMessage();
             }
         );
@@ -587,7 +624,7 @@ document
 
 $("newChatBtn")?.addEventListener(
     "click",
-    () => {
+    function() {
 
         messages.innerHTML = "";
 
@@ -597,20 +634,23 @@ $("newChatBtn")?.addEventListener(
 
         /*
          * SESSION-SCOPE: Clear the current session's
-         * document list when starting a new conversation.
+         * document selection when starting a new conversation.
          *
-         * Historical documents remain stored in the
-         * backend's metadata store / My Documents —
-         * they are just not in the active session.
+         * Documents remain stored in the backend's
+         * metadata store / My Documents.
+         * They are NOT deleted.
          */
         uploadedDocuments = [];
         selectedDocumentIds = new Set();
         currentConversationId = null;
         if (progress) progress.textContent = "";
         renderDocuments();
-        renderConversations(); // Remove active state
+        renderConversations();
 
-        messageInput.focus();
+        // Refresh My Documents (documents persist)
+        if (typeof loadMyDocuments === "function") loadMyDocuments();
+
+        if (messageInput) messageInput.focus();
     }
 );
 
@@ -619,112 +659,125 @@ $("newChatBtn")?.addEventListener(
    DOCUMENT COMPARISON
 ========================= */
 
-compareBtn?.addEventListener(
-    "click",
-    async () => {
+if (compareBtn) {
+    compareBtn.addEventListener(
+        "click",
+        async function() {
 
-        if (
-            selectedDocumentIds.size !== 2 ||
-            busy
-        ) {
-            return;
-        }
+            if (selectedDocumentIds.size < 2 || busy) {
+                if (selectedDocumentIds.size < 2) {
+                    addMessage("Please select at least 2 documents to compare.", "assistant");
+                }
+                return;
+            }
 
-        busy = true;
+            busy = true;
+            compareBtn.disabled = true;
 
-        compareBtn.disabled = true;
+            // Show comparison in chat area
+            showWorkspace("chatArea");
 
-        showWorkspace("comparisonPanel");
+            // Build the selected document names for the prompt
+            var selectedDocs = uploadedDocuments.filter(function(d) {
+                return selectedDocumentIds.has(d.id || d.document_id);
+            });
 
+            var docNames = selectedDocs.map(function(d) { return d.filename; }).join(", ");
 
-        const selected =
-            uploadedDocuments.filter(
-                (d) =>
-                    selectedDocumentIds.has(d.id)
-            );
+            var comparePrompt = "Compare these documents in detail: " + docNames + ". " +
+                "List the key similarities and differences between them. " +
+                "Use clear sections for Similarities, Differences, and a Summary.";
 
+            addMessage("Compare: " + docNames, "user");
 
-        const result =
-            comparisonPanel.querySelector(
-                ".comparison-result"
-            ) ||
-            document.createElement("div");
+            // Typing indicator
+            var typing = document.createElement("div");
+            typing.className = "message assistant typing-indicator";
+            typing.id = "typingMessage";
 
+            var typingAvatar = document.createElement("div");
+            typingAvatar.className = "avatar";
+            typingAvatar.textContent = "\u2726";
+            typing.appendChild(typingAvatar);
 
-        result.className =
-            "comparison-result";
+            var typingContent = document.createElement("div");
+            typingContent.className = "message-content";
+            typingContent.textContent = "Comparing documents\u2026";
+            typing.appendChild(typingContent);
 
-        result.textContent =
-            "Comparing documents…";
+            messages.appendChild(typing);
+            typing.scrollIntoView({ behavior: "smooth", block: "end" });
 
-        comparisonPanel.appendChild(result);
+            if (welcomeScreen) welcomeScreen.style.display = "none";
+            messages.style.display = "flex";
 
+            try {
+                var docIds = Array.from(selectedDocumentIds);
 
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/compare`,
+                var response = await fetch(
+                    API_URL + "/chat",
                     {
                         method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            documents:
-                                selected.map(
-                                    (d) => ({
-                                        id: d.id,
-                                        filename:
-                                            d.filename
-                                    })
-                                )
+                            message: comparePrompt,
+                            document_ids: docIds,
+                            conversation_id: currentConversationId
                         })
                     }
                 );
 
+                var data = await response.json().catch(function() { return {}; });
 
-            const data =
-                await response
-                    .json()
-                    .catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(
+                        data.detail || "Comparison failed (" + response.status + ")"
+                    );
+                }
 
+                if (data.conversation_id && !currentConversationId) {
+                    currentConversationId = data.conversation_id;
+                    loadConversations();
+                }
 
-            if (!response.ok) {
+                var result = data.response || data.answer || "No comparison generated.";
+                var sources = data.sources || [];
 
-                throw new Error(
-                    data.detail ||
-                    `Comparison failed (${response.status})`
-                );
+                addMessage(result, "assistant", sources);
+
+            } catch (e) {
+                console.error("Comparison error:", e);
+                addMessage("Comparison failed: " + e.message, "assistant");
+
+            } finally {
+                var typingEl = $("typingMessage");
+                if (typingEl) typingEl.remove();
+
+                busy = false;
+                renderDocuments();
             }
-
-
-            result.textContent =
-                data.response ||
-                data.comparison ||
-                JSON.stringify(
-                    data,
-                    null,
-                    2
-                );
-
-
-        } catch (e) {
-
-            result.textContent =
-                `Comparison failed: ${e.message}`;
-
-        } finally {
-
-            busy = false;
-
-            renderDocuments();
         }
-    }
-);
+    );
+}
+
+
+/* =========================
+   VISUALIZE BUTTON
+========================= */
+
+var vizBtn = $("visualizeBtn");
+if (vizBtn) {
+    vizBtn.addEventListener("click", function() {
+        if (!messageInput) return;
+        var current = messageInput.value.trim();
+        if (current) {
+            messageInput.value = "Visualize this: " + current;
+        } else {
+            messageInput.value = "Create a visualization of the key data from the selected documents. Return a JSON object with type (bar, line, pie, table, timeline, or process), title, labels, and values.";
+        }
+        sendMessage();
+    });
+}
 
 
 /* =========================
