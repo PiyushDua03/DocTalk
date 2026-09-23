@@ -90,22 +90,46 @@ function addMessage(text, role, sources) {
     var content = document.createElement("div");
     content.className = "message-content";
 
-    // Try to detect visualization data
-    var vizData = (typeof tryParseVisualization === "function") ? tryParseVisualization(text) : null;
+    // Try to detect ALL visualization data blocks (support multiple charts)
+    var allJsonBlocks = text.match(/```json\s*([\s\S]*?)```/g);
+    var vizRendered = false;
 
-    if (vizData) {
-        // Remove JSON from display text
-        var cleanText = text.replace(/```json[\s\S]*?```/g, "").replace(/\{[\s\S]*"type"[\s\S]*\}/g, "").trim();
+    if (allJsonBlocks && allJsonBlocks.length > 0 && typeof renderVisualization === "function") {
+        // Clean text: remove all JSON blocks
+        var cleanText = text.replace(/```json[\s\S]*?```/g, "").trim();
         if (cleanText) {
             var textP = document.createElement("div");
             textP.innerHTML = renderMarkdown(cleanText);
             content.appendChild(textP);
         }
-        if (typeof renderVisualization === "function") {
-            renderVisualization(vizData, content);
+
+        // Render each chart
+        for (var vi = 0; vi < allJsonBlocks.length; vi++) {
+            try {
+                var jsonStr = allJsonBlocks[vi].replace(/```json\s*/, "").replace(/```$/, "").trim();
+                var vizObj = JSON.parse(jsonStr);
+                if (vizObj && vizObj.type) {
+                    renderVisualization(vizObj, content);
+                    vizRendered = true;
+                }
+            } catch(e) { /* skip invalid JSON */ }
         }
-    } else {
-        content.innerHTML = renderMarkdown(text);
+    }
+
+    if (!vizRendered) {
+        // Fallback: try single viz detection
+        var vizData = (typeof tryParseVisualization === "function") ? tryParseVisualization(text) : null;
+        if (vizData) {
+            var cleanText2 = text.replace(/```json[\s\S]*?```/g, "").replace(/\{[\s\S]*"type"[\s\S]*\}/g, "").trim();
+            if (cleanText2) {
+                content.innerHTML = renderMarkdown(cleanText2);
+            }
+            if (typeof renderVisualization === "function") {
+                renderVisualization(vizData, content);
+            }
+        } else {
+            content.innerHTML = renderMarkdown(text);
+        }
     }
 
     // Display sources if available
@@ -128,6 +152,35 @@ function addMessage(text, role, sources) {
             srcDiv.appendChild(srcItem);
         }
         content.appendChild(srcDiv);
+    }
+
+    // Add download toolbar for assistant messages
+    if (role === "assistant" || !role) {
+        var toolbar = document.createElement("div");
+        toolbar.className = "message-toolbar";
+
+        var pdfBtn = document.createElement("button");
+        pdfBtn.className = "msg-action-btn";
+        pdfBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Download PDF';
+        pdfBtn.title = "Download this response as PDF";
+        pdfBtn.onclick = function() { downloadMessageAsPDF(content, text); };
+        toolbar.appendChild(pdfBtn);
+
+        var copyBtn = document.createElement("button");
+        copyBtn.className = "msg-action-btn";
+        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+        copyBtn.title = "Copy to clipboard";
+        copyBtn.onclick = function() {
+            navigator.clipboard.writeText(text).then(function() {
+                copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                setTimeout(function() {
+                    copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+                }, 2000);
+            });
+        };
+        toolbar.appendChild(copyBtn);
+
+        content.appendChild(toolbar);
     }
 
     el.appendChild(content);
@@ -156,14 +209,20 @@ function showWorkspace(id) {
 
     if (chatArea) {
         chatArea.style.display =
-            hidePanels.indexOf(id) !== -1 ? "none" : "block";
+            hidePanels.indexOf(id) !== -1 ? "none" : "flex";
+        if (id === "chatArea" && messages) {
+            chatArea.insertBefore(messages, document.getElementById("uploaded-documents-area"));
+        }
     }
 
     if (comparisonPanel) {
-        comparisonPanel.classList.toggle(
-            "active",
-            id === "comparisonPanel"
-        );
+        comparisonPanel.style.display = id === "comparisonPanel" ? "flex" : "none";
+        comparisonPanel.classList.toggle("active", id === "comparisonPanel");
+        if (id === "comparisonPanel" && messages) {
+            comparisonPanel.appendChild(messages);
+            var resultArea = document.getElementById("comparison-result-area");
+            if (resultArea) resultArea.style.display = "none";
+        }
     }
 
     if (insightsPanel) {
@@ -254,21 +313,9 @@ async function loadConversation(id) {
         messages.style.display = "flex";
         showWorkspace("chatArea");
 
-        // Restore messages
+        // Restore messages using the addMessage function so markdown, charts, and sources render properly
         data.messages.forEach(function(msg) {
-            var el = document.createElement("div");
-            el.className = "message " + msg.role;
-            if (msg.role === "assistant") {
-                var av = document.createElement("div");
-                av.className = "avatar";
-                av.textContent = "\u2726";
-                el.appendChild(av);
-            }
-            var ct = document.createElement("div");
-            ct.className = "message-content";
-            ct.textContent = msg.content;
-            el.appendChild(ct);
-            messages.appendChild(el);
+            addMessage(msg.content, msg.role, msg.sources);
         });
 
         // Scroll to bottom
@@ -519,6 +566,13 @@ async function sendMessage() {
          */
         var docIds = Array.from(selectedDocumentIds);
 
+        // Detect if the user is asking for charts/visuals
+        var chartKeywords = /\b(chart|graph|diagram|visual|visuali[sz]|plot|radar|bar chart|pie chart|line chart|comparison|compare|flow diagram|timeline|infographic)\b/i;
+        var augmentedMessage = message;
+        if (chartKeywords.test(message)) {
+            augmentedMessage = message + "\n\nIMPORTANT: You MUST respond with actual chart data in JSON format wrapped in ```json code fences. Use one of these chart types: bar, line, pie, table, process, timeline. Format example for bar chart: ```json\n{\"type\":\"bar\",\"title\":\"Chart Title\",\"labels\":[\"A\",\"B\",\"C\"],\"values\":[10,20,30]}\n``` For comparison/table: ```json\n{\"type\":\"table\",\"title\":\"Comparison\",\"headers\":[\"Attribute\",\"Edge\",\"Cloud\"],\"rows\":[[\"Latency\",\"1-10ms\",\"50-250ms\"],[\"Privacy\",\"High\",\"Moderate\"]]}\n``` For process/flow: ```json\n{\"type\":\"process\",\"title\":\"Flow\",\"steps\":[\"Step 1\",\"Step 2\",\"Step 3\"]}\n``` For pie: ```json\n{\"type\":\"pie\",\"title\":\"Distribution\",\"labels\":[\"A\",\"B\"],\"values\":[60,40]}\n``` For timeline: ```json\n{\"type\":\"timeline\",\"title\":\"Timeline\",\"events\":[{\"date\":\"Phase 1\",\"description\":\"Description\"}]}\n``` You can include MULTIPLE ```json blocks if the user asks for multiple charts. Include a brief text explanation before each chart. DO NOT just describe charts in text — you MUST include the JSON data so the charts render visually.";
+        }
+
         var response =
             await fetch(
                 API_URL + "/chat",
@@ -528,7 +582,7 @@ async function sendMessage() {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        message: message,
+                        message: augmentedMessage,
                         document_ids: docIds,
                         conversation_id: currentConversationId
                     })
@@ -684,8 +738,8 @@ if (compareBtn) {
             busy = true;
             compareBtn.disabled = true;
 
-            // Show comparison in chat area
-            showWorkspace("chatArea");
+            // Show comparison in compare documents area
+            showWorkspace("comparisonPanel");
 
             // Build the selected document names for the prompt
             var selectedDocs = uploadedDocuments.filter(function(d) {
@@ -787,6 +841,475 @@ if (vizBtn) {
         }
         sendMessage();
     });
+}
+
+
+/* =========================
+   DOWNLOAD / EXPORT
+========================= */
+
+/**
+ * Download a single AI response as a styled PDF.
+ */
+function downloadMessageAsPDF(contentEl, rawText) {
+    var clone = contentEl.cloneNode(true);
+
+    // Remove the toolbar from the clone
+    var tb = clone.querySelector(".message-toolbar");
+    if (tb) tb.remove();
+
+    // Create a wrapper with nice styling
+    var wrapper = document.createElement("div");
+    wrapper.style.cssText = "padding:32px;font-family:'Inter',sans-serif;color:#1a1a2e;max-width:700px;line-height:1.7;";
+
+    // Header
+    var header = document.createElement("div");
+    header.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #6c5ce7;";
+    header.innerHTML = '<div style="width:32px;height:32px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">✦</div>' +
+        '<div><strong style="font-size:16px;color:#6c5ce7;">DocTalk</strong><br><span style="font-size:11px;color:#888;">AI Document Intelligence — Generated Response</span></div>';
+    wrapper.appendChild(header);
+
+    // Content
+    clone.style.cssText = "font-size:13px;color:#2d3436;";
+    wrapper.appendChild(clone);
+
+    // Footer
+    var footer = document.createElement("div");
+    footer.style.cssText = "margin-top:24px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#999;text-align:center;";
+    footer.textContent = "Generated by DocTalk — " + new Date().toLocaleString();
+    wrapper.appendChild(footer);
+
+    var opt = {
+        margin: [10, 10, 10, 10],
+        filename: "DocTalk_Response_" + Date.now() + ".pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    };
+
+    html2pdf().set(opt).from(wrapper).save();
+}
+
+
+/**
+ * Download a single AI response as a PNG image.
+ */
+function downloadMessageAsImage(contentEl) {
+    var clone = contentEl.cloneNode(true);
+
+    // Remove the toolbar from the clone
+    var tb = clone.querySelector(".message-toolbar");
+    if (tb) tb.remove();
+
+    // Create a wrapper
+    var wrapper = document.createElement("div");
+    wrapper.style.cssText = "padding:28px;background:linear-gradient(135deg,#0f0f23,#1a1a3e);border-radius:16px;max-width:700px;font-family:'Inter',sans-serif;color:#e0e0e0;line-height:1.7;";
+
+    // Header
+    var header = document.createElement("div");
+    header.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(108,92,231,0.4);";
+    header.innerHTML = '<div style="width:28px;height:28px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;">✦</div>' +
+        '<strong style="font-size:14px;color:#a29bfe;">DocTalk Response</strong>';
+    wrapper.appendChild(header);
+
+    clone.style.cssText = "font-size:13px;color:#e0e0e0;";
+    wrapper.appendChild(clone);
+
+    var footer = document.createElement("div");
+    footer.style.cssText = "margin-top:16px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;color:#666;text-align:right;";
+    footer.textContent = "DocTalk — " + new Date().toLocaleString();
+    wrapper.appendChild(footer);
+
+    // Temporarily add to DOM for rendering
+    wrapper.style.position = "fixed";
+    wrapper.style.left = "-9999px";
+    document.body.appendChild(wrapper);
+
+    html2canvas(wrapper, { scale: 2, backgroundColor: null, useCORS: true }).then(function(canvas) {
+        document.body.removeChild(wrapper);
+        var link = document.createElement("a");
+        link.download = "DocTalk_Response_" + Date.now() + ".png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }).catch(function() {
+        document.body.removeChild(wrapper);
+    });
+}
+
+
+/**
+ * Export the entire conversation as a PDF.
+ */
+function exportConversationAsPDF() {
+    var allMessages = document.querySelectorAll("#messages .message");
+    if (!allMessages.length) return;
+
+    var wrapper = document.createElement("div");
+    wrapper.style.cssText = "padding:32px;font-family:'Inter',sans-serif;color:#1a1a2e;max-width:700px;line-height:1.7;";
+
+    // Title page header
+    var header = document.createElement("div");
+    header.style.cssText = "text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #6c5ce7;";
+    header.innerHTML = '<div style="width:48px;height:48px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:white;font-size:24px;margin-bottom:12px;">✦</div>' +
+        '<h1 style="font-size:22px;color:#6c5ce7;margin:8px 0 4px;">DocTalk Conversation</h1>' +
+        '<p style="font-size:12px;color:#888;">Exported on ' + new Date().toLocaleString() + '</p>';
+    wrapper.appendChild(header);
+
+    allMessages.forEach(function(msg, idx) {
+        var isUser = msg.classList.contains("user");
+        var contentEl = msg.querySelector(".message-content");
+        if (!contentEl) return;
+
+        var block = document.createElement("div");
+        block.style.cssText = "margin-bottom:16px;padding:14px;border-radius:10px;" +
+            (isUser
+                ? "background:#f0edff;border-left:3px solid #6c5ce7;"
+                : "background:#f8f9fa;border-left:3px solid #00b894;");
+
+        var label = document.createElement("div");
+        label.style.cssText = "font-size:11px;font-weight:600;margin-bottom:6px;color:" + (isUser ? "#6c5ce7" : "#00b894") + ";";
+        label.textContent = isUser ? "👤 You" : "✦ DocTalk AI";
+        block.appendChild(label);
+
+        var clone = contentEl.cloneNode(true);
+        var tb = clone.querySelector(".message-toolbar");
+        if (tb) tb.remove();
+        clone.style.cssText = "font-size:12px;color:#2d3436;";
+        block.appendChild(clone);
+
+        wrapper.appendChild(block);
+    });
+
+    var footer = document.createElement("div");
+    footer.style.cssText = "margin-top:20px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#999;text-align:center;";
+    footer.textContent = "Generated by DocTalk — AI Document Intelligence";
+    wrapper.appendChild(footer);
+
+    var opt = {
+        margin: [10, 10, 10, 10],
+        filename: "DocTalk_Conversation_" + Date.now() + ".pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+    };
+
+    html2pdf().set(opt).from(wrapper).save();
+}
+
+
+/* =========================
+   INFOGRAPHIC GENERATOR
+========================= */
+
+/**
+ * Generate a visual infographic from the uploaded document.
+ * Asks AI for structured data, then renders on Canvas.
+ */
+function generateInfographic() {
+    if (uploadedDocuments.length === 0) {
+        addMessage("Please upload a document first to generate an infographic.", "assistant");
+        return;
+    }
+
+    addMessage("🎨 Generate visual infographic", "user");
+    addMessage("Analyzing your document and creating a visual infographic... Please wait.", "assistant");
+
+    var selectedIds = Array.from(selectedDocumentIds);
+    var body = {
+        message: "Analyze the uploaded document and return ONLY valid JSON (no markdown, no code fences) in this exact format: {\"title\": \"Document Title\", \"subtitle\": \"One-line description\", \"keyTopics\": [\"Topic 1\", \"Topic 2\", \"Topic 3\", \"Topic 4\", \"Topic 5\", \"Topic 6\"], \"stats\": [{\"label\": \"Stat Name\", \"value\": \"Stat Value\"}, {\"label\": \"Stat Name\", \"value\": \"Stat Value\"}, {\"label\": \"Stat Name\", \"value\": \"Stat Value\"}], \"summary\": \"A 2-3 sentence summary of the document.\"}",
+        document_ids: selectedIds.length > 0 ? selectedIds : uploadedDocuments.map(function(d) { return d.id; })
+    };
+
+    fetch(API_URL + "/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var responseText = data.response || data.answer || "";
+        // Try to parse JSON from the response
+        var jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            try {
+                var info = JSON.parse(jsonMatch[0]);
+                renderInfographicCanvas(info);
+                return;
+            } catch(e) { /* fall through */ }
+        }
+        // Fallback: build from text
+        var lines = responseText.split("\n").filter(function(l) { return l.trim(); });
+        var fallback = {
+            title: uploadedDocuments[0] ? uploadedDocuments[0].name : "Document Analysis",
+            subtitle: "AI-Generated Visual Summary",
+            keyTopics: lines.slice(0, 6).map(function(l) { return l.replace(/^[-•*\d.]+\s*/, "").substring(0, 40); }),
+            stats: [
+                { label: "Pages", value: "N/A" },
+                { label: "Topics", value: String(lines.length) },
+                { label: "Confidence", value: "High" }
+            ],
+            summary: lines.slice(0, 2).join(" ").substring(0, 200)
+        };
+        renderInfographicCanvas(fallback);
+    })
+    .catch(function(err) {
+        addMessage("Could not generate infographic: " + err.message, "assistant");
+    });
+}
+
+
+/**
+ * Render a beautiful infographic on HTML5 Canvas and auto-download.
+ */
+function renderInfographicCanvas(info) {
+    var W = 1200, H = 1600;
+    var canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    var ctx = canvas.getContext("2d");
+
+    // Background gradient
+    var bgGrad = ctx.createLinearGradient(0, 0, W, H);
+    bgGrad.addColorStop(0, "#080B16");
+    bgGrad.addColorStop(0.5, "#0D1222");
+    bgGrad.addColorStop(1, "#11182A");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Decorative circles
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = "#6366F1";
+    ctx.beginPath(); ctx.arc(1050, 150, 200, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#8B5CF6";
+    ctx.beginPath(); ctx.arc(150, 1400, 250, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#06B6D4";
+    ctx.beginPath(); ctx.arc(1100, 1200, 180, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Top accent bar
+    var accentGrad = ctx.createLinearGradient(0, 0, W, 0);
+    accentGrad.addColorStop(0, "#6366F1");
+    accentGrad.addColorStop(1, "#8B5CF6");
+    ctx.fillStyle = accentGrad;
+    ctx.fillRect(0, 0, W, 6);
+
+    // Logo area
+    ctx.fillStyle = "#6366F1";
+    roundRect(ctx, 50, 40, 44, 44, 10);
+    ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 24px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("✦", 72, 70);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#E2E8F0";
+    ctx.font = "bold 20px 'Inter', sans-serif";
+    ctx.fillText("DocTalk", 110, 60);
+    ctx.fillStyle = "#64748B";
+    ctx.font = "12px 'Inter', sans-serif";
+    ctx.fillText("AI Document Intelligence", 110, 78);
+
+    // Timestamp
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#475569";
+    ctx.font = "11px 'Inter', sans-serif";
+    ctx.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), W - 50, 65);
+    ctx.textAlign = "left";
+
+    // Title
+    ctx.fillStyle = "#F1F5F9";
+    ctx.font = "bold 36px 'Inter', sans-serif";
+    var title = (info.title || "Document Analysis").substring(0, 50);
+    wrapText(ctx, title, 50, 150, W - 100, 44);
+
+    // Subtitle
+    ctx.fillStyle = "#94A3B8";
+    ctx.font = "16px 'Inter', sans-serif";
+    ctx.fillText((info.subtitle || "AI-Generated Visual Summary").substring(0, 80), 50, 210);
+
+    // Divider
+    var divGrad = ctx.createLinearGradient(50, 0, W - 50, 0);
+    divGrad.addColorStop(0, "#6366F1");
+    divGrad.addColorStop(0.5, "#8B5CF6");
+    divGrad.addColorStop(1, "transparent");
+    ctx.fillStyle = divGrad;
+    ctx.fillRect(50, 235, W - 100, 2);
+
+    // Stats cards
+    var stats = info.stats || [];
+    var statY = 270;
+    var cardW = (W - 140) / 3;
+    for (var si = 0; si < Math.min(stats.length, 3); si++) {
+        var sx = 50 + si * (cardW + 20);
+        // Card background
+        ctx.fillStyle = "rgba(99, 102, 241, 0.08)";
+        roundRect(ctx, sx, statY, cardW, 90, 12);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(99, 102, 241, 0.2)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, sx, statY, cardW, 90, 12);
+        ctx.stroke();
+        // Value
+        ctx.fillStyle = "#A5B4FC";
+        ctx.font = "bold 28px 'Inter', sans-serif";
+        ctx.fillText(String(stats[si].value || "—").substring(0, 15), sx + 20, statY + 42);
+        // Label
+        ctx.fillStyle = "#64748B";
+        ctx.font = "13px 'Inter', sans-serif";
+        ctx.fillText(String(stats[si].label || "").substring(0, 25), sx + 20, statY + 70);
+    }
+
+    // Key Topics section
+    var topicY = 400;
+    ctx.fillStyle = "#6366F1";
+    ctx.font = "bold 13px 'Inter', sans-serif";
+    ctx.fillText("KEY TOPICS", 50, topicY);
+
+    var topics = info.keyTopics || [];
+    var colors = ["#6366F1", "#8B5CF6", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
+    var colW = (W - 120) / 2;
+
+    for (var ti = 0; ti < Math.min(topics.length, 6); ti++) {
+        var col = ti % 2;
+        var row = Math.floor(ti / 2);
+        var tx = 50 + col * (colW + 20);
+        var ty = topicY + 25 + row * 110;
+        var color = colors[ti % colors.length];
+
+        // Topic card
+        ctx.fillStyle = hexToRgba(color, 0.08);
+        roundRect(ctx, tx, ty, colW, 90, 12);
+        ctx.fill();
+
+        // Left accent
+        ctx.fillStyle = color;
+        roundRect(ctx, tx, ty, 4, 90, 2);
+        ctx.fill();
+
+        // Number badge
+        ctx.fillStyle = hexToRgba(color, 0.2);
+        ctx.beginPath(); ctx.arc(tx + 30, ty + 32, 16, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = color;
+        ctx.font = "bold 14px 'Inter', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(ti + 1), tx + 30, ty + 37);
+        ctx.textAlign = "left";
+
+        // Topic text
+        ctx.fillStyle = "#E2E8F0";
+        ctx.font = "600 15px 'Inter', sans-serif";
+        wrapText(ctx, String(topics[ti] || "").substring(0, 60), tx + 56, ty + 35, colW - 76, 20);
+    }
+
+    // Summary section
+    var summaryY = topicY + 25 + Math.ceil(Math.min(topics.length, 6) / 2) * 110 + 30;
+    ctx.fillStyle = "#6366F1";
+    ctx.font = "bold 13px 'Inter', sans-serif";
+    ctx.fillText("SUMMARY", 50, summaryY);
+
+    ctx.fillStyle = "rgba(99, 102, 241, 0.06)";
+    roundRect(ctx, 50, summaryY + 15, W - 100, 120, 12);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(99, 102, 241, 0.15)";
+    roundRect(ctx, 50, summaryY + 15, W - 100, 120, 12);
+    ctx.stroke();
+
+    ctx.fillStyle = "#CBD5E1";
+    ctx.font = "15px 'Inter', sans-serif";
+    wrapText(ctx, (info.summary || "No summary available.").substring(0, 300), 70, summaryY + 50, W - 140, 22);
+
+    // Footer
+    ctx.fillStyle = "rgba(99, 102, 241, 0.3)";
+    ctx.fillRect(50, H - 70, W - 100, 1);
+    ctx.fillStyle = "#475569";
+    ctx.font = "11px 'Inter', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Generated by DocTalk — AI Document Intelligence  •  " + new Date().toLocaleString(), W / 2, H - 40);
+    ctx.textAlign = "left";
+
+    // Download
+    var link = document.createElement("a");
+    link.download = "DocTalk_Infographic_" + Date.now() + ".png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    // Also show in chat
+    var img = document.createElement("img");
+    img.src = canvas.toDataURL("image/png");
+    img.style.cssText = "max-width:100%;border-radius:12px;margin-top:8px;cursor:pointer;border:1px solid var(--border);";
+    img.title = "Click to download";
+    img.onclick = function() { link.click(); };
+
+    var msgEl = document.createElement("div");
+    msgEl.className = "message assistant";
+    var av = document.createElement("div");
+    av.className = "avatar";
+    av.textContent = "\u2726";
+    msgEl.appendChild(av);
+    var contentDiv = document.createElement("div");
+    contentDiv.className = "message-content";
+    var label = document.createElement("p");
+    label.innerHTML = "<strong>🎨 Document Infographic</strong>";
+    contentDiv.appendChild(label);
+    contentDiv.appendChild(img);
+
+    // Download Image button
+    var dlToolbar = document.createElement("div");
+    dlToolbar.className = "message-toolbar";
+    dlToolbar.style.opacity = "1";
+    var dlBtn = document.createElement("button");
+    dlBtn.className = "msg-action-btn";
+    dlBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Download Image';
+    dlBtn.title = "Download infographic as PNG";
+    dlBtn.onclick = function() { link.click(); };
+    dlToolbar.appendChild(dlBtn);
+    contentDiv.appendChild(dlToolbar);
+
+    msgEl.appendChild(contentDiv);
+    messages.appendChild(msgEl);
+    msgEl.scrollIntoView({ behavior: "smooth", block: "end" });
+}
+
+// Canvas helper: rounded rectangle
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+// Canvas helper: wrap text
+function wrapText(ctx, text, x, y, maxW, lineH) {
+    var words = text.split(" ");
+    var line = "";
+    for (var n = 0; n < words.length; n++) {
+        var testLine = line + words[n] + " ";
+        if (ctx.measureText(testLine).width > maxW && n > 0) {
+            ctx.fillText(line.trim(), x, y);
+            line = words[n] + " ";
+            y += lineH;
+        } else {
+            line = testLine;
+        }
+    }
+    ctx.fillText(line.trim(), x, y);
+}
+
+// Helper: hex to rgba
+function hexToRgba(hex, alpha) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
 }
 
 

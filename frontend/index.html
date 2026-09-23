@@ -8,6 +8,8 @@
     <title>DocTalk — AI Document Intelligence</title>
 
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
 <body>
@@ -48,11 +50,7 @@
                     <span>AI Assistant</span>
                 </div>
 
-                <!-- Document Insights -->
-                <div class="sidebar-item" data-target="insightsPanel" role="button" tabindex="0">
-                    <span>◈</span>
-                    <span>Document Insights</span>
-                </div>
+
 
                 <!-- Compare Documents -->
                 <div class="sidebar-item" data-target="comparisonPanel" role="button" tabindex="0">
@@ -66,11 +64,7 @@
                     <span>My Documents</span>
                 </div>
 
-                <!-- How It Works -->
-                <div class="sidebar-item" data-target="architecturePanel" role="button" tabindex="0">
-                    <span>⚙</span>
-                    <span>How It Works</span>
-                </div>
+
 
             </div>
 
@@ -102,6 +96,10 @@
                 </div>
 
                 <div class="topbar-right">
+                    <button class="export-conv-btn" onclick="exportConversationAsPDF()" title="Export conversation as PDF">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Export PDF
+                    </button>
                     <span class="online-dot"></span>
                     <span>Agent online</span>
                 </div>
@@ -187,179 +185,10 @@
                 </div>
 
 
-                <!-- Document Insights -->
-                <section class="insights-panel" id="insightsPanel">
-
-                    <div class="insights-header">
-
-                        <div>
-                            <p class="eyebrow">
-                                DOCUMENT INTELLIGENCE
-                            </p>
-
-                            <h2>
-                                Document insights
-                            </h2>
-
-                            <p class="insights-description">
-                                Explore a quick visual overview of your document.
-                            </p>
-                        </div>
-
-                        <span class="demo-badge">
-                            Demo data
-                        </span>
-
-                    </div>
 
 
-                    <!-- Insight Summary Cards -->
-                    <div class="insights-grid">
-
-                        <div class="insight-card">
-                            <span class="insight-label">
-                                Document type
-                            </span>
-
-                            <strong>
-                                Research report
-                            </strong>
-
-                            <small>
-                                Detected category
-                            </small>
-                        </div>
 
 
-                        <div class="insight-card">
-                            <span class="insight-label">
-                                Key topics
-                            </span>
-
-                            <strong>
-                                6 topics
-                            </strong>
-
-                            <small>
-                                Main concepts identified
-                            </small>
-                        </div>
-
-
-                        <div class="insight-card">
-                            <span class="insight-label">
-                                Reading time
-                            </span>
-
-                            <strong>
-                                8 minutes
-                            </strong>
-
-                            <small>
-                                Estimated reading duration
-                            </small>
-                        </div>
-
-                    </div>
-
-
-                    <!-- Lower Insights -->
-                    <div class="insights-lower-grid">
-
-                        <!-- Key Topics -->
-                        <div class="insight-box">
-
-                            <h3>
-                                Key topics
-                            </h3>
-
-
-                            <div class="topic-row">
-                                <span>
-                                    Artificial intelligence
-                                </span>
-
-                                <div class="topic-bar">
-                                    <span style="width: 90%;"></span>
-                                </div>
-                            </div>
-
-
-                            <div class="topic-row">
-                                <span>
-                                    Document analysis
-                                </span>
-
-                                <div class="topic-bar">
-                                    <span style="width: 75%;"></span>
-                                </div>
-                            </div>
-
-
-                            <div class="topic-row">
-                                <span>
-                                    Data processing
-                                </span>
-
-                                <div class="topic-bar">
-                                    <span style="width: 60%;"></span>
-                                </div>
-                            </div>
-
-
-                            <div class="topic-row">
-                                <span>
-                                    Search and retrieval
-                                </span>
-
-                                <div class="topic-bar">
-                                    <span style="width: 45%;"></span>
-                                </div>
-                            </div>
-
-                        </div>
-
-
-                        <!-- Document Overview -->
-                        <div class="insight-box">
-
-                            <h3>
-                                Document overview
-                            </h3>
-
-                            <p class="overview-text">
-                                This document discusses how artificial intelligence
-                                can help users understand, search, and compare
-                                information across documents.
-                            </p>
-
-
-                            <div class="overview-stat">
-                                <span>
-                                    Estimated complexity
-                                </span>
-
-                                <strong>
-                                    Moderate
-                                </strong>
-                            </div>
-
-
-                            <div class="overview-stat">
-                                <span>
-                                    Analysis status
-                                </span>
-
-                                <strong class="status-ready">
-                                    Ready for review
-                                </strong>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
 
 
                 <!-- Chat Messages -->
@@ -430,177 +259,9 @@
             </section>
 
 
-            <!-- Architecture / How It Works Panel -->
-            <section class="architecture-panel" id="architecturePanel">
-
-                <div class="arch-header">
-                    <p class="eyebrow">AI AGENT ARCHITECTURE</p>
-                    <h2>How DocTalk Works</h2>
-                    <p class="arch-subtitle">Six Azure AI services working together as intelligent agents</p>
-                </div>
 
 
-                <!-- Pipeline 1: Document Ingestion -->
-                <div class="arch-pipeline">
-                    <div class="arch-pipeline-label">
-                        <span class="arch-pipeline-badge ingest">INGESTION PIPELINE</span>
-                        <span class="arch-pipeline-desc">When you upload a document</span>
-                    </div>
 
-                    <div class="arch-flow">
-
-                        <div class="arch-node">
-                            <div class="arch-node-icon upload">⬆</div>
-                            <div class="arch-node-body">
-                                <strong>User Upload</strong>
-                                <small>PDF, DOCX, TXT files</small>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node">
-                            <div class="arch-node-icon azure-blue">☁</div>
-                            <div class="arch-node-body">
-                                <strong>Azure Blob Storage</strong>
-                                <small>Secure cloud storage</small>
-                                <span class="arch-tag">doctalkstorage01</span>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad2)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node">
-                            <div class="arch-node-icon violet">🧠</div>
-                            <div class="arch-node-body">
-                                <strong>Azure Document Intelligence</strong>
-                                <small>OCR + text extraction + layout analysis</small>
-                                <span class="arch-tag">prebuilt-read model</span>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad3)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad3" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node">
-                            <div class="arch-node-icon slate">▦</div>
-                            <div class="arch-node-body">
-                                <strong>Chunking Engine</strong>
-                                <small>500-char chunks, 50-char overlap</small>
-                                <span class="arch-tag">document_id tagged</span>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad4)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad4" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node highlight-cyan">
-                            <div class="arch-node-icon cyan">🔍</div>
-                            <div class="arch-node-body">
-                                <strong>Azure AI Search</strong>
-                                <small>Hybrid vector + keyword index</small>
-                                <span class="arch-tag">doctalk-search-rag</span>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-
-                <!-- Bridge -->
-                <div class="arch-bridge">
-                    <div class="arch-bridge-line"></div>
-                    <div class="arch-bridge-label">Azure AI Search is the bridge between ingestion and retrieval</div>
-                    <div class="arch-bridge-line"></div>
-                </div>
-
-
-                <!-- Pipeline 2: RAG Query -->
-                <div class="arch-pipeline">
-                    <div class="arch-pipeline-label">
-                        <span class="arch-pipeline-badge rag">RAG QUERY PIPELINE</span>
-                        <span class="arch-pipeline-desc">When you ask a question</span>
-                    </div>
-
-                    <div class="arch-flow">
-
-                        <div class="arch-node">
-                            <div class="arch-node-icon upload">💬</div>
-                            <div class="arch-node-body">
-                                <strong>User Question</strong>
-                                <small>Natural language query</small>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad5)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad5" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#22D3EE"/><stop offset="100%" stop-color="#6366F1"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node highlight-cyan">
-                            <div class="arch-node-icon cyan">🔍</div>
-                            <div class="arch-node-body">
-                                <strong>Azure AI Search</strong>
-                                <small>Hybrid retrieval + document_id filtering</small>
-                                <span class="arch-tag">top_k=5</span>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad6)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad6" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#22D3EE"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node">
-                            <div class="arch-node-icon slate">☰</div>
-                            <div class="arch-node-body">
-                                <strong>Context Builder</strong>
-                                <small>Top 5 relevant chunks assembled</small>
-                                <span class="arch-tag">with source metadata</span>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad7)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad7" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#6366F1"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node highlight-primary">
-                            <div class="arch-node-icon primary">✦</div>
-                            <div class="arch-node-body">
-                                <strong>Azure AI Foundry</strong>
-                                <small>GPT-4o-mini RAG answer generation</small>
-                                <span class="arch-tag">DocTalk-Agent</span>
-                            </div>
-                        </div>
-
-                        <div class="arch-arrow">
-                            <svg viewBox="0 0 40 16" class="arch-arrow-svg"><path d="M0 8 L32 8 M28 3 L34 8 L28 13" fill="none" stroke="url(#archGrad8)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="archGrad8" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#22C55E"/></linearGradient></defs></svg>
-                        </div>
-
-                        <div class="arch-node highlight-green">
-                            <div class="arch-node-icon green">✓</div>
-                            <div class="arch-node-body">
-                                <strong>Response + Sources</strong>
-                                <small>Answer with document_name + page citations</small>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-
-                <!-- Azure Service Badges -->
-                <div class="arch-badges">
-                    <div class="arch-badge azure-blue">☁ Azure Blob Storage</div>
-                    <div class="arch-badge violet">🧠 Document Intelligence</div>
-                    <div class="arch-badge cyan">🔍 Azure AI Search</div>
-                    <div class="arch-badge primary">✦ Azure AI Foundry</div>
-                    <div class="arch-badge green">🤖 GPT-4o-mini</div>
-                </div>
 
             </section>
 
@@ -624,10 +285,10 @@
                     <!-- Message Input -->
                     <textarea id="messageInput" placeholder="Ask DocTalk anything..." rows="1"></textarea>
 
-                    <!-- Visualize Button -->
-                    <button id="visualizeBtn" class="viz-btn" type="button" title="Visualize data"
-                        aria-label="Visualize">
-                        📊
+                    <!-- Generate Infographic Button -->
+                    <button id="infographicBtn" class="infographic-btn" type="button" title="Generate visual infographic from document"
+                        aria-label="Generate Infographic" onclick="generateInfographic()">
+                        🎨
                     </button>
 
                     <!-- Send Button -->

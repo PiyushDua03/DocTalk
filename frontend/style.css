@@ -7,6 +7,14 @@
    Fonts: Space Grotesk (headlines) + Inter (body)
    ========================================================== */
 
+/* Hidden panels */
+#insightsPanel,
+#architecturePanel,
+[data-target="insightsPanel"],
+[data-target="architecturePanel"] {
+    display: none !important;
+}
+
 :root {
     /* Background layers */
     --bg: #080B16;
@@ -2039,4 +2047,100 @@ button {
     .arch-badges {
         justify-content: flex-start;
     }
+}
+
+/* =========================
+   MESSAGE TOOLBAR — Download/Export
+========================= */
+
+.message-toolbar {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.message:hover .message-toolbar {
+    opacity: 1;
+}
+
+.msg-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.msg-action-btn:hover {
+    background: var(--primary-subtle);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.msg-action-btn svg {
+    flex-shrink: 0;
+}
+
+/* Export Conversation Button */
+.export-conv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-right: 12px;
+}
+
+.export-conv-btn:hover {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 12px var(--primary-glow);
+    transform: translateY(-1px);
+}
+
+.export-conv-btn svg {
+    flex-shrink: 0;
+}
+
+/* Infographic Button */
+.infographic-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+}
+
+.infographic-btn:hover {
+    background: linear-gradient(135deg, #F59E0B, #EF4444);
+    border-color: transparent;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }

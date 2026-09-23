@@ -25,6 +25,8 @@ function renderVisualization(data, container) {
         table: renderTable,
         timeline: renderTimeline,
         process: renderProcessDiagram,
+        radar: renderRadarChart,
+        comparison: renderComparisonCards,
     };
 
     const renderer = renderers[type];
@@ -72,7 +74,7 @@ function tryParseVisualization(text) {
     }
 
     // Look for raw JSON object in text
-    var braceMatch = text.match(/\{[\s\S]*"type"\s*:\s*"(bar|line|pie|table|timeline|process)"[\s\S]*\}/);
+    var braceMatch = text.match(/\{[\s\S]*"type"\s*:\s*"(bar|line|pie|table|timeline|process|radar|comparison)"[\s\S]*\}/);
     if (braceMatch) {
         try {
             var obj2 = JSON.parse(braceMatch[0]);
@@ -492,4 +494,144 @@ function downloadSvg(svgElement, name) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+
+/* =========================================================
+   RADAR CHART
+   ========================================================= */
+
+function renderRadarChart(data, container) {
+    var labels = data.labels || [];
+    var datasets = data.datasets || [];
+    var title = data.title || "Radar Chart";
+    var n = labels.length;
+    if (n < 3) return;
+
+    var W = 500, H = 460;
+    var cx = W / 2, cy = 200, r = 140;
+
+    var svg = createSvgEl("svg", { viewBox: "0 0 " + W + " " + H, "class": "viz-svg" });
+
+    // Title
+    svg.appendChild(createSvgText(W / 2, 28, title, {
+        "text-anchor": "middle", "font-size": "15", "font-weight": "600", fill: "#e2e8f0"
+    }));
+
+    // Grid rings
+    for (var ring = 1; ring <= 5; ring++) {
+        var ringR = (r / 5) * ring;
+        var ringPoints = [];
+        for (var ri = 0; ri < n; ri++) {
+            var angle = (Math.PI * 2 / n) * ri - Math.PI / 2;
+            ringPoints.push((cx + ringR * Math.cos(angle)).toFixed(1) + "," + (cy + ringR * Math.sin(angle)).toFixed(1));
+        }
+        svg.appendChild(createSvgEl("polygon", {
+            points: ringPoints.join(" "),
+            fill: "none", stroke: "#1e293b", "stroke-width": "1"
+        }));
+    }
+
+    // Axis lines + labels
+    for (var ai = 0; ai < n; ai++) {
+        var angle2 = (Math.PI * 2 / n) * ai - Math.PI / 2;
+        var ax = cx + r * Math.cos(angle2);
+        var ay = cy + r * Math.sin(angle2);
+        svg.appendChild(createSvgEl("line", {
+            x1: cx, y1: cy, x2: ax, y2: ay,
+            stroke: "#1e293b", "stroke-width": "1"
+        }));
+        var lx = cx + (r + 18) * Math.cos(angle2);
+        var ly = cy + (r + 18) * Math.sin(angle2);
+        var anchor = Math.abs(angle2) < 0.1 || Math.abs(angle2 - Math.PI) < 0.1 ? "middle" : (angle2 > -Math.PI / 2 && angle2 < Math.PI / 2 ? "start" : "end");
+        svg.appendChild(createSvgText(lx, ly + 4, String(labels[ai]).substring(0, 20), {
+            "text-anchor": anchor, "font-size": "10", fill: "#94a3b8"
+        }));
+    }
+
+    // Dataset polygons
+    var dsColors = ["#6366f1", "#f59e0b", "#10b981", "#ef4444"];
+    for (var di = 0; di < datasets.length; di++) {
+        var ds = datasets[di];
+        var dsValues = ds.values || [];
+        var dsMax = ds.max || Math.max.apply(null, dsValues.concat([1]));
+        var dsPoints = [];
+        for (var pi = 0; pi < n; pi++) {
+            var val = (dsValues[pi] || 0) / dsMax;
+            var pAngle = (Math.PI * 2 / n) * pi - Math.PI / 2;
+            dsPoints.push((cx + r * val * Math.cos(pAngle)).toFixed(1) + "," + (cy + r * val * Math.sin(pAngle)).toFixed(1));
+        }
+        var color = dsColors[di % dsColors.length];
+        svg.appendChild(createSvgEl("polygon", {
+            points: dsPoints.join(" "),
+            fill: color, "fill-opacity": "0.15", stroke: color, "stroke-width": "2"
+        }));
+        // Dots
+        for (var dpi = 0; dpi < dsPoints.length; dpi++) {
+            var coords = dsPoints[dpi].split(",");
+            svg.appendChild(createSvgEl("circle", {
+                cx: coords[0], cy: coords[1], r: 3, fill: color
+            }));
+        }
+    }
+
+    // Legend
+    var legendY = cy + r + 40;
+    for (var li = 0; li < datasets.length; li++) {
+        var lColor = dsColors[li % dsColors.length];
+        svg.appendChild(createSvgEl("rect", {
+            x: 50 + li * 160, y: legendY, width: 12, height: 12, rx: 2, fill: lColor
+        }));
+        svg.appendChild(createSvgText(68 + li * 160, legendY + 10, String(datasets[li].label || "Dataset " + (li + 1)), {
+            "font-size": "11", fill: "#94a3b8"
+        }));
+    }
+
+    container.appendChild(svg);
+}
+
+
+/* =========================================================
+   COMPARISON CARDS
+   ========================================================= */
+
+function renderComparisonCards(data, container) {
+    var cards = data.cards || [];
+    var title = data.title || "Comparison";
+
+    if (!cards.length) return;
+
+    var h = document.createElement("h4");
+    h.style.cssText = "color:#e2e8f0;font-size:15px;font-weight:600;margin-bottom:12px;";
+    h.textContent = title;
+    container.appendChild(h);
+
+    var grid = document.createElement("div");
+    grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;";
+
+    var cardColors = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4"];
+
+    for (var ci = 0; ci < cards.length; ci++) {
+        var card = cards[ci];
+        var color = cardColors[ci % cardColors.length];
+        var cardEl = document.createElement("div");
+        cardEl.style.cssText = "background:rgba(15,23,42,0.8);border:1px solid " + color + "33;border-radius:12px;padding:16px;border-top:3px solid " + color + ";";
+
+        var cardTitle = document.createElement("h5");
+        cardTitle.style.cssText = "color:" + color + ";font-size:14px;margin:0 0 10px;font-weight:600;";
+        cardTitle.textContent = card.title || "Item " + (ci + 1);
+        cardEl.appendChild(cardTitle);
+
+        var bullets = card.bullets || card.items || [];
+        for (var bi = 0; bi < bullets.length; bi++) {
+            var bullet = document.createElement("div");
+            bullet.style.cssText = "font-size:12px;color:#94a3b8;padding:4px 0;border-bottom:1px solid rgba(148,163,184,0.1);display:flex;align-items:flex-start;gap:6px;";
+            bullet.innerHTML = '<span style="color:' + color + ';font-size:10px;margin-top:2px;">●</span>' + String(bullets[bi]);
+            cardEl.appendChild(bullet);
+        }
+
+        grid.appendChild(cardEl);
+    }
+
+    container.appendChild(grid);
 }
