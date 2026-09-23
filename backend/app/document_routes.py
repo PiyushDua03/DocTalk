@@ -280,6 +280,19 @@ async def delete_document(document_id: str):
         )
         # Continue with metadata deletion even if blob delete fails
 
+    # Delete associated chunks from Azure AI Search
+    try:
+        from app.search_service import delete_document_chunks
+        deleted_chunks = delete_document_chunks(document_id)
+        logger.info(
+            f"Deleted {deleted_chunks} Search chunks for {document_id}"
+        )
+    except Exception as error:
+        logger.error(
+            f"Failed to delete Search chunks for {document_id}: {error}"
+        )
+        # Continue with metadata deletion even if Search cleanup fails
+
     # Delete metadata
     metadata_store.delete_document(document_id)
 

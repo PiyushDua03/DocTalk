@@ -144,3 +144,34 @@ def hybrid_search(query: str, query_vector: list[float], top: int = 5, document_
         top=top
     )
     return list(results)
+
+
+def delete_document_chunks(document_id: str) -> int:
+    """
+    Delete all chunks belonging to a specific document_id
+    from the Azure AI Search index.
+
+    Returns the number of chunks deleted.
+    """
+    client = get_search_client()
+
+    # Find all chunk_ids belonging to this document
+    filter_expr = f"document_id eq '{document_id}'"
+    results = client.search(
+        search_text="*",
+        select=["chunk_id"],
+        filter=filter_expr,
+        top=1000,
+    )
+
+    chunk_ids = [r["chunk_id"] for r in results]
+
+    if not chunk_ids:
+        return 0
+
+    # Delete by key (chunk_id)
+    documents_to_delete = [{"chunk_id": cid} for cid in chunk_ids]
+    delete_results = client.delete_documents(documents=documents_to_delete)
+
+    deleted = sum(1 for r in delete_results if r.succeeded)
+    return deleted
