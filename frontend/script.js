@@ -1,4 +1,4 @@
-var API_URL = "http://127.0.0.1:8000";
+var API_URL = "https://doctalk-backend-api.azurewebsites.net";
 
 var uploadedDocuments = [];
 var selectedDocumentIds = new Set();
