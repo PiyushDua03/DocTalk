@@ -1,0 +1,39 @@
+services:
+  # Backend API
+  - type: web
+    name: doctalk-backend
+    runtime: python
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: AZURE_STORAGE_ACCOUNT_URL
+        sync: false
+      - key: AZURE_STORAGE_CONTAINER
+        sync: false
+      - key: AZURE_STORAGE_CONNECTION_STRING
+        sync: false
+      - key: AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
+        sync: false
+      - key: AZURE_DOCUMENT_INTELLIGENCE_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+  # Frontend Static Site
+  - type: web
+    name: doctalk-frontend
+    runtime: static
+    plan: free
+    region: singapore
+    rootDir: frontend
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
